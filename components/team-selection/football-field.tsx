@@ -540,7 +540,7 @@ const FootballFormationVisualizer = () => {
           text-white text-xs font-bold transform -translate-x-1/2 -translate-y-1/2
           cursor-pointer transition-all duration-200 hover:scale-125 hover:z-10
           ${
-            role === 'goalkeeper' ? 'bg-gradient-to-br from-gray-800 to-green-800 border-2 border-white' : 
+            role === 'goalkeeper' ? 'bg-gradient-to-br from-gray-800 to-green-700 border-2 border-white' : 
             role === 'defender' ? 'bg-gradient-to-br from-blue-600 to-blue-300 border-2 border-white' : 
             role === 'midfielder' ? 'bg-gradient-to-br from-green-600 to-green-300 border-2 border-white' : 
             'bg-gradient-to-br from-red-600 to-red-300 border-2 border-white'

@@ -245,13 +245,13 @@ const TeamFormation: React.FC = () => {
 
   return (
     <div className='w-[45%] h-[390px] border border-opacity-10 shadow-lg rounded-xl p-4 bg-white flex flex-col'>
-      <p className='text-dark font-bold text-xl mb-4'>Recommended formation</p>
+      <p className='text-dark font-bold text-xl mb-4'>Player Recommended </p>
       <div className="flex-1 overflow-hidden">
         {loading ? (
           <div className="w-full h-full max-h-[330px] overflow-y-auto"><SkeletonLoader /></div>
         ) : error ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center h-full">
-            <div className="text-red-500 font-semibold mb-2">{error}</div>
+            
             <p className="text-gray-500 text-sm">No recommendations available at this time</p>
           </div>
         ) : recommendations.length === 0 ? (

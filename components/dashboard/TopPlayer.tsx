@@ -3,7 +3,8 @@ import {
   FaUserAlt, FaTrophy, FaStar, FaFutbol, FaRunning, 
   FaHandsHelping, FaChartLine, FaTimes, FaBirthdayCake, 
   FaRulerVertical, FaWeight, FaShoePrints, FaCrosshairs,
-  FaBrain, FaShieldAlt, FaBolt, FaFistRaised
+  FaBrain, FaShieldAlt, FaBolt, FaFistRaised,
+  FaExclamationTriangle
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { Radar, Bar, PolarArea } from 'react-chartjs-2';
@@ -180,8 +181,14 @@ const TopPlayer = () => {
       console.error('Error fetching top player:', err);
       const cachedData = getCachedData();
       if (cachedData) {
-        setPlayerData(cachedData);
-        setError('Using cached data - ' + (err instanceof Error ? err.message : 'Network error'));
+        // Only use cached data if it matches the current coachId
+        const coachId = document.cookie.split('; ').find(row => row.startsWith('x-user-id='))?.split('=')[1];
+        if (cachedData && String(cachedData.player_id) === coachId) {
+          setPlayerData(cachedData);
+          setError('Using cached data. ' + (err instanceof Error ? err.message : 'Network error'));
+        } else {
+          setError(err instanceof Error ? err.message : 'Unknown error occurred');
+        }
       } else {
         setError(err instanceof Error ? err.message : 'Unknown error occurred');
       }
@@ -287,25 +294,29 @@ const TopPlayer = () => {
     ],
   };
 
-  if (error) {
-    return (
-      <div className="w-full p-4 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-700">
-        {error.includes('Using cached data') ? (
-          <>
-            <span className="font-medium">{error}</span>
-            <button 
-              onClick={fetchTopPlayer} 
-              className="ml-2 px-2 py-1 bg-yellow-100 rounded text-yellow-700 hover:bg-yellow-200 text-sm"
-            >
-              Retry
-            </button>
-          </>
-        ) : (
-          `Error loading player data: ${error}`
-        )}
+ 
+
+if (error) {
+  return (
+    <div className="p-4 rounded-lg bg-white border ">
+      <div className="flex items-start">
+        <FaExclamationTriangle className="h-5 w-5 mt-0.5 mr-2 flex-shrink-0 text-dark" />
+        <div>
+          {error.includes('') ? (
+            <>
+              <span className="font-medium text-dark">No top player available currently</span>
+              
+            </>
+          ) : error.includes('No players found') ? (
+            "No players are currently registered in the system."
+          ) : (
+            `Error loading player data: ${error}`
+          )}
+        </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <>

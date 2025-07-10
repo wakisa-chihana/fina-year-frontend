@@ -38,7 +38,7 @@ const TeamDetails = () => {
   const [teamData, setTeamData] = useState<TeamData>({
     id: 0,
     name: "Unknown Team",
-    location: "Zomba, Malawi",
+    location: "Malawi",
     player_count: 0,
     stadium_count: 0,
     primary_color: "#3b82f6", // blue-500 as default

@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { useEffect, useState } from "react";
 import { baseUrl } from "@/constants/baseUrl";
+import { FaRegSadTear } from "react-icons/fa";
 
 // Helper function to get a cookie value by name
 function getCookie(name: string): string | undefined {
@@ -77,13 +78,17 @@ export default function RatingChart() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="w-[20%] bg-transparent p-4 rounded-xl text-red-500 text-sm">
-        Error loading data: {error}
-      </div>
-    );
-  }
+
+
+if (error) {
+  return (
+    <div className="w-[20%] bg-transparent p-4 rounded-xl text-dark text-sm flex flex-col items-center">
+      <FaRegSadTear className="text-2xl mb-2" />
+      <span>No graph available</span>
+    </div>
+  );
+}
+
 
   if (!data) {
     return (

@@ -213,7 +213,11 @@ const Ranks = () => {
   if (error) {
     return (
       <div className="w-full md:w-[30%] shadow-lg border border-opacity-10 rounded-xl p-4 bg-white">
-        <div className="text-red-500">{error}</div>
+        <div className="text-dark font-bold text-lg">Ranks</div>
+        <div className="flex-1 flex flex-col items-center justify-center text-center h-full">
+            
+            <p className="text-gray-500 text-sm">No player available at this time</p>
+          </div>
       </div>
     );
   }
