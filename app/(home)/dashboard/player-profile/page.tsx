@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { GiSoccerBall, GiSoccerField, GiSoccerKick } from "react-icons/gi";
 import { FaPlus, FaFutbol, FaRunning, FaSearch } from "react-icons/fa";
 import { FaCirclePlus, FaFilter } from "react-icons/fa6";
@@ -101,7 +101,7 @@ const PlayerProfile = () => {
     }
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const cId = Number(Cookies.get("x-user-id"));
       if (!cId) {
@@ -137,11 +137,11 @@ const PlayerProfile = () => {
     } finally {
       setLoading((prev) => ({ ...prev, fetch: false, teamFetch: false }));
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   useEffect(() => {
     const filtered = players.filter((player) => {

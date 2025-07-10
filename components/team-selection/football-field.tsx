@@ -44,7 +44,8 @@ interface Player {
   [key: string]: any;
 }
 
-interface Goalkeeper extends Player {}
+// Goalkeeper type is the same as Player, so no need for a separate interface
+type Goalkeeper = Player;
 
 interface PlayerPosition {
   x: number;
@@ -939,7 +940,7 @@ const FormationSection = ({
         {players.map((player, i) => (
           <li key={i} className={`flex items-center ${colorClasses[color].text} text-sm`}>
             <span className={`w-6 h-6 flex items-center justify-center ${colorClasses[color].bullet} text-white rounded-full mr-2 font-medium text-xs`}>
-              {player.label?.charAt(player.label.length-1) || i+1}
+              {(player.label && player.label.length > 0 ? player.label.charAt(player.label.length - 1) : (i + 1))}
             </span>
             {player.player 
               ? `${player.player.name} (${player.player.overall_performance.toFixed(1)})`

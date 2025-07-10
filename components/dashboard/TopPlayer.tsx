@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   FaUserAlt, FaTrophy, FaStar, FaFutbol, FaRunning, 
   FaHandsHelping, FaChartLine, FaTimes, FaBirthdayCake, 
@@ -109,13 +109,13 @@ const TopPlayer = () => {
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  const isCacheValid = (cachedData: any) => {
+  const isCacheValid = useCallback((cachedData: any) => {
     if (!cachedData || !cachedData.timestamp) return false;
     const now = new Date().getTime();
     return now - cachedData.timestamp < CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
-  };
+  }, []);
 
-  const getCachedData = () => {
+  const getCachedData = useCallback(() => {
     const cachedData = localStorage.getItem(CACHE_KEY);
     if (!cachedData) return null;
     
@@ -125,7 +125,7 @@ const TopPlayer = () => {
     } catch (e) {
       return null;
     }
-  };
+  }, [isCacheValid]);
 
   const setCachedData = (data: PlayerAttributes) => {
     const cacheObject = {
@@ -148,7 +148,7 @@ const TopPlayer = () => {
     };
   }, []);
 
-  const fetchTopPlayer = async () => {
+  const fetchTopPlayer = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -195,11 +195,11 @@ const TopPlayer = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isOnline, getCachedData]);
 
   useEffect(() => {
     fetchTopPlayer();
-  }, []);
+  }, [fetchTopPlayer]);
 
   const handleCardClick = () => {
     if (!isLoading) {

@@ -237,7 +237,7 @@ const SupportMiniForm = () => {
       animate={{ opacity: 1 }}
       className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg"
     >
-      Message sent! We'll get back to you shortly.
+      Message sent! We&apos;ll get back to you shortly.
     </motion.div>
   ) : (
     <form onSubmit={handleSubmit} className="space-y-5">

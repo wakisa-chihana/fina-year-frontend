@@ -118,7 +118,7 @@ if (error) {
     <div className="w-[20%] bg-transparent p-4 rounded-xl text-black">
       <div className="flex justify-between items-center mb-2">
         <p className="text-black font-bold">
-          {data.player_name}'s performance
+          {data.player_name}&apos;s performance
         </p>
         <div className="flex space-x-1">
           <button 
