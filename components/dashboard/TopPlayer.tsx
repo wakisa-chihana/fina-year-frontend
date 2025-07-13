@@ -11,7 +11,6 @@ import { Radar, Bar, PolarArea } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   RadialLinearScale,
-  BarElement,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -20,7 +19,8 @@ import {
   Title,
   Tooltip,
   Legend,
-  Colors
+  Colors,
+  BarElement
 } from 'chart.js';
 import { baseUrl } from '@/constants/baseUrl';
 

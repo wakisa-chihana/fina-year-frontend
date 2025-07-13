@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { GiSoccerBall, GiSoccerField, GiSoccerKick } from "react-icons/gi";
 import { FaPlus, FaFutbol, FaRunning, FaSearch } from "react-icons/fa";
 import { FaCirclePlus, FaFilter } from "react-icons/fa6";
@@ -15,6 +15,7 @@ import PlayerCard from "@/components/player-profile-comp/PlayerCard";
 import PlayerModal from "@/components/player-profile-comp/PlayerModal";
 import InvitePlayerModal from "@/components/player-profile-comp/InvitePlayerModal";
 import LoadingAnimation from "@/components/LoadingAnimation";
+import PlayerSkeleton from "@/components/player-profile-comp/PlayerSkeleton";
 
 interface Player {
   player_id: number;
@@ -42,10 +43,34 @@ interface ApiResponse {
   players: Player[];
 }
 
+const POSITIONS = ["Forward", "Midfielder", "Defender", "Goalkeeper"];
+const DEFAULT_PLAYER_VALUES = {
+  overall_performance: 0,
+  last_5_performances: [70, 75, 80, 82, 85],
+  joined_date: new Date().toISOString().split("T")[0],
+  status: "accepted" as const,
+};
+
+function getLimitForScreen() {
+  if (typeof window === "undefined") return 10;
+  const width = window.innerWidth;
+  if (width < 640) return 6;
+  if (width < 1024) return 12;
+  return 20;
+}
+
 const PlayerProfile = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+
+  // UI state
   const [showModal, setShowModal] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterPosition, setFilterPosition] = useState("all");
+
+  // Form state
   const [formData, setFormData] = useState({
     player_name: "",
     player_email: "",
@@ -57,52 +82,73 @@ const PlayerProfile = () => {
     position: "",
     general: "",
   });
+
+  // Loading states
   const [loading, setLoading] = useState({
+    initial: true,
     fetch: true,
     submit: false,
     teamFetch: true,
+    more: false,
   });
+
+  // Data state
   const [coachId, setCoachId] = useState<number>(0);
   const [teamId, setTeamId] = useState<number>(0);
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterPosition, setFilterPosition] = useState("all");
-  const [showFilters, setShowFilters] = useState(false);
 
-  const fetchPlayers = async (tId: number, cId: number) => {
+  // Infinite scroll state
+  const [offset, setOffset] = useState(0);
+  const [limit, setLimit] = useState(getLimitForScreen());
+  const [hasMore, setHasMore] = useState(true);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Responsive limit adjustment
+  useEffect(() => {
+    const handleResize = () => setLimit(getLimitForScreen());
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Player fetching with pagination
+  const fetchPlayers = useCallback(async (
+    tId: number,
+    cId: number,
+    offsetValue = offset,
+    limitValue = limit,
+    replace = false
+  ) => {
+    setLoading(prev => ({ ...prev, more: true }));
     try {
-      const playersResponse = await axios.get<ApiResponse>(
-        `${baseUrl}/team_players/team/${tId}/coach/${cId}`
+      const response = await axios.get<ApiResponse>(
+        `${baseUrl}/team_players/team/${tId}/coach/${cId}?limit=${limitValue}&offset=${offsetValue}`
       );
 
-      if (playersResponse.data.success) {
-        const playersWithStatus = playersResponse.data.players.map(
-          (player) => ({
-            ...player,
-            status: "accepted" as const,
-            overall_performance: player.overall_performance || 0,
-            last_5_performances: player.last_5_performances || [
-              70, 75, 80, 82, 85,
-            ],
-            joined_date:
-              player.joined_date || new Date().toISOString().split("T")[0],
-          })
+      if (response.data.success) {
+        const playersWithStatus = response.data.players.map((player) => ({
+          ...player,
+          ...DEFAULT_PLAYER_VALUES,
+          status: player.status || DEFAULT_PLAYER_VALUES.status,
+          overall_performance: player.overall_performance || DEFAULT_PLAYER_VALUES.overall_performance,
+        }));
+
+        setPlayers(prev =>
+          replace ? playersWithStatus : [...prev, ...playersWithStatus]
         );
-        setPlayers(playersWithStatus);
-        setFilteredPlayers(playersWithStatus);
+        setHasMore(playersWithStatus.length === limitValue);
+        setOffset(offsetValue + limitValue);
       }
     } catch (error) {
-      console.error("Error fetching players:", error);
-      if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message || "Failed to load players");
-      } else {
-        toast.error("An unexpected error occurred while fetching players");
-      }
+      handleFetchError(error, "players");
+    } finally {
+      setLoading(prev => ({ ...prev, more: false }));
     }
-  };
+  }, [offset, limit]); // Add dependencies
 
+  // Main data fetching logic
   const fetchData = useCallback(async () => {
     try {
+      setLoading(prev => ({ ...prev, initial: true }));
       const cId = Number(Cookies.get("x-user-id"));
       if (!cId) {
         toast.error("Coach ID not found in cookies");
@@ -122,27 +168,37 @@ const PlayerProfile = () => {
       const tId = teamResponse.data.teams[0].id;
       setTeamId(tId);
 
-      await fetchPlayers(tId, cId);
+      setOffset(0);
+      setPlayers([]);
+      setHasMore(true);
+      await fetchPlayers(tId, cId, 0, limit, true);
     } catch (error) {
-      console.error("Error fetching data:", error);
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          toast.error("API endpoint not found - please check backend routes");
-        } else {
-          toast.error(error.response?.data?.message || "Failed to load data");
-        }
-      } else {
-        toast.error("An unexpected error occurred");
-      }
+      handleFetchError(error);
     } finally {
-      setLoading((prev) => ({ ...prev, fetch: false, teamFetch: false }));
+      setLoading(prev => ({ ...prev, fetch: false, teamFetch: false, initial: false }));
     }
-  }, []);
+  }, [limit, fetchPlayers]); // Add fetchPlayers dependency
 
+  // Error handling utility
+  const handleFetchError = (error: unknown, context = "data") => {
+    console.error(`Error fetching ${context}:`, error);
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        toast.error("API endpoint not found - please check backend routes");
+      } else {
+        toast.error(error.response?.data?.message || `Failed to load ${context}`);
+      }
+    } else {
+      toast.error(`An unexpected error occurred while fetching ${context}`);
+    }
+  };
+
+  // Initial load
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
+  // Filtering logic
   useEffect(() => {
     const filtered = players.filter((player) => {
       const matchesSearch =
@@ -156,9 +212,30 @@ const PlayerProfile = () => {
     setFilteredPlayers(filtered);
   }, [searchTerm, filterPosition, players]);
 
+  // Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current || loading.more || !hasMore || loading.fetch) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+      if (scrollHeight - scrollTop - clientHeight < 120) {
+        // Show skeleton immediately on scroll event
+        setLoading(prev => ({ ...prev, more: true }));
+        fetchPlayers(teamId, coachId, offset, limit);
+      }
+    };
+
+    const div = containerRef.current;
+    if (div) div.addEventListener("scroll", handleScroll);
+    return () => {
+      if (div) div.removeEventListener("scroll", handleScroll);
+    };
+  }, [loading.more, hasMore, offset, limit, teamId, coachId, loading.fetch, fetchPlayers]); // Add fetchPlayers dependency
+
+  // Form handling
   const handleInvitePlayer = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading((prev) => ({ ...prev, submit: true }));
+    setLoading(prev => ({ ...prev, submit: true }));
     setFormErrors({
       player_name: "",
       player_email: "",
@@ -181,47 +258,51 @@ const PlayerProfile = () => {
 
       if (response.data.success) {
         toast.success("Player invited successfully!");
-        // Instead of adding locally, refresh the entire list
-        await fetchPlayers(teamId, coachId);
+        setOffset(0);
+        await fetchPlayers(teamId, coachId, 0, limit, true);
         setFormData({ player_name: "", player_email: "", position: "" });
         setShowModal(false);
       }
     } catch (error) {
-      console.error("Invite error:", error);
+      handleFormError(error);
+    } finally {
+      setLoading(prev => ({ ...prev, submit: false }));
+    }
+  };
 
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          setFormErrors((prev) => ({
-            ...prev,
-            general: "API endpoint not found - please check the URL",
-          }));
-        } else if (error.response?.data?.errors) {
-          setFormErrors((prev) => ({
-            ...prev,
-            ...error.response?.data?.errors,
-          }));
-        } else if (error.response?.data?.detail) {
-          setFormErrors((prev) => ({
-            ...prev,
-            general:
-              error.response?.data?.detail ||
-              error.response?.data?.message ||
-              "An unexpected error occurred",
-          }));
-        } else {
-          setFormErrors((prev) => ({
-            ...prev,
-            general: "Failed to invite player",
-          }));
-        }
-      } else {
-        setFormErrors((prev) => ({
+  const handleFormError = (error: unknown) => {
+    console.error("Invite error:", error);
+
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        setFormErrors(prev => ({
           ...prev,
-          general: "An unexpected error occurred",
+          general: "API endpoint not found - please check the URL",
+        }));
+      } else if (error.response?.data?.errors) {
+        setFormErrors(prev => ({
+          ...prev,
+          ...error.response?.data?.errors,
+        }));
+      } else if (error.response?.data?.detail) {
+        setFormErrors(prev => ({
+          ...prev,
+          general:
+            error.response?.data?.detail ||
+            error.response?.data?.message ||
+            "An unexpected error occurred",
+        }));
+      } else {
+        setFormErrors(prev => ({
+          ...prev,
+          general: "Failed to invite player",
         }));
       }
-    } finally {
-      setLoading((prev) => ({ ...prev, submit: false }));
+    } else {
+      setFormErrors(prev => ({
+        ...prev,
+        general: "An unexpected error occurred",
+      }));
     }
   };
 
@@ -229,34 +310,34 @@ const PlayerProfile = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value,
     }));
-    setFormErrors((prev) => ({
+    setFormErrors(prev => ({
       ...prev,
       [name]: "",
       general: "",
     }));
   };
 
-  const positions = [
-    "Forward",
-    "Midfielder",
-    "Defender",
-    "Goalkeeper",
-    
-  ];
-
   if (loading.fetch) {
-    return (
-        <LoadingAnimation />
-    );
+    return <LoadingAnimation />;
   }
 
   return (
-    <div className="w-full flex flex-col bg-gray-50 min-h-screen p-4 md:p-8">
+    <div
+      className="w-full flex flex-col bg-gray-50 min-h-screen p-4 md:p-8 hide-scrollbar"
+      ref={containerRef}
+      style={{
+        height: "100vh",
+        overflowY: "auto",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
+      }}
+    >
       <div className="max-w-7xl mx-auto w-full">
+        {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -305,6 +386,7 @@ const PlayerProfile = () => {
           </div>
         </motion.div>
 
+        {/* Filters Section */}
         <AnimatePresence>
           {showFilters && (
             <motion.div
@@ -328,7 +410,7 @@ const PlayerProfile = () => {
                   >
                     All Positions
                   </button>
-                  {positions.map((pos) => (
+                  {POSITIONS.map((pos) => (
                     <button
                       key={pos}
                       onClick={() => setFilterPosition(pos)}
@@ -347,7 +429,12 @@ const PlayerProfile = () => {
           )}
         </AnimatePresence>
 
-        {filteredPlayers.length === 0 ? (
+        {/* Players Grid */}
+        {loading.initial ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <PlayerSkeleton count={getLimitForScreen()} />
+          </div>
+        ) : filteredPlayers.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -376,7 +463,7 @@ const PlayerProfile = () => {
             <AnimatePresence>
               {filteredPlayers.map((player, index) => (
                 <motion.div
-                  key={player.player_id}
+                  key={`${player.player_id}-${index}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
@@ -396,10 +483,18 @@ const PlayerProfile = () => {
                   />
                 </motion.div>
               ))}
+              {/* Loading skeleton appears at the end while new players are loading */}
+              {loading.more && <PlayerSkeleton count={Math.min(4, limit)} />}
+              {!hasMore && (
+                <div className="col-span-full text-center py-4 text-gray-400">
+                  No more players
+                </div>
+              )}
             </AnimatePresence>
           </div>
         )}
 
+        {/* Modals */}
         <InvitePlayerModal
           show={showModal}
           onClose={() => {
@@ -432,7 +527,9 @@ const PlayerProfile = () => {
                 overall_performance: selectedPlayer.overall_performance || 0,
               }}
               onClose={() => setSelectedPlayer(null)}
-              onPlayerDeleted={() => fetchPlayers(teamId, coachId)} // Add this prop
+              onPlayerDeleted={() =>
+                fetchPlayers(teamId, coachId, 0, limit, true)
+              }
             />
           )}
         </AnimatePresence>

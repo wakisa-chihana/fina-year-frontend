@@ -20,7 +20,7 @@ const HomePage = () => {
         <HeroSection />
       </div>
 
-      <div className="w-full my-8 md:my-16">
+      <div className="w-full my-8 md:my-16 ">
         <Objectives />
       </div>
     </main>

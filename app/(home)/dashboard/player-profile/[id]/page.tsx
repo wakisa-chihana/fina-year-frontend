@@ -7,13 +7,13 @@ import {
   FaUserAlt, FaFutbol, FaRunning, FaShieldAlt, FaCross, 
   FaShoePrints, FaTachometerAlt, FaBolt, FaStopwatch, 
   FaDumbbell, FaBullseye, FaEye, FaBrain, FaFistRaised,
-  FaPlus, FaFire, FaClock, FaMedal, FaChevronLeft
+  FaPlus, FaFire, FaClock, FaMedal, FaChevronLeft, FaRegSadTear
 } from 'react-icons/fa';
 import { GiSoccerBall, GiSoccerKick, GiSoccerField, GiStrong } from 'react-icons/gi';
 import { IoMdSend } from 'react-icons/io';
 import { RiSwordFill } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Radar, Bar, Pie } from 'react-chartjs-2';
+import { Radar, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -31,6 +31,17 @@ import { JSX } from 'react/jsx-runtime';
 import PlayerProfileForm from '@/components/player-profile-comp/player-profile-form';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import { baseUrl } from '@/constants/baseUrl';
+import {
+  AreaChart,
+  BarChart,
+  Bar,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer
+} from "recharts";
 
 ChartJS.register(
   RadialLinearScale,
@@ -44,6 +55,84 @@ ChartJS.register(
   BarElement,
   ArcElement
 );
+
+const colorPalette = {
+  blue: "#3B82F6",
+  indigo: "#6366F1",
+  green: "#10B981",
+  amber: "#F59E42",
+  yellow: "#FBBF24",
+  purple: "#A78BFA",
+  red: "#EF4444",
+  gray: "#E5E7EB",
+  white: "#FFFFFF",
+};
+
+const chartColors = {
+  physical: [
+    colorPalette.blue,
+    colorPalette.indigo,
+    colorPalette.green,
+    colorPalette.amber,
+    colorPalette.yellow,
+    colorPalette.purple,
+    colorPalette.red,
+    colorPalette.gray,
+    colorPalette.green
+  ],
+  technical: [
+    colorPalette.green,
+    colorPalette.blue,
+    colorPalette.indigo,
+    colorPalette.amber,
+    colorPalette.yellow,
+    colorPalette.purple,
+    colorPalette.red,
+    colorPalette.gray,
+    colorPalette.yellow,
+    colorPalette.purple,
+    colorPalette.blue,
+    colorPalette.green,
+  ],
+  mental: [
+    colorPalette.purple,
+    colorPalette.amber,
+    colorPalette.red,
+    colorPalette.green,
+    colorPalette.indigo
+  ],
+  defensive: [
+    colorPalette.blue,
+    colorPalette.green,
+    colorPalette.red,
+    colorPalette.indigo
+  ],
+};
+
+const chartSizes = {
+  mobile: {
+    pieHeight: "h-40",
+    radarHeight: "h-44",
+    barHeight: "h-40",
+    icon: "text-xl mr-2",
+    avatar: "w-24 h-24 mb-4",
+    avatarIcon: "text-4xl",
+    title: "text-xl",
+    overall: "text-3xl",
+    headerIcon: "text-2xl"
+  },
+  desktop: {
+    pieHeight: "h-64",
+    radarHeight: "h-72",
+    barHeight: "h-72",
+    icon: "text-2xl mr-2",
+    avatar: "w-40 h-40 mb-6",
+    avatarIcon: "text-7xl",
+    title: "text-3xl",
+    overall: "text-5xl",
+    headerIcon: "text-4xl"
+  }
+};
 
 interface PlayerData {
   player_id: number;
@@ -89,7 +178,11 @@ interface PlayerData {
   overall_performance: number | null;
 }
 
-// FIX: Use string keys for workRateMap and convert lookup to string for robustness
+type PerformanceHistoryItem = {
+  overall_performance: number;
+  recorded_at: string | null;
+};
+
 const workRateMap: Record<string, string> = {
   "4": 'High / High',
   "3.5": 'High / Medium',
@@ -115,9 +208,21 @@ export default function PlayerProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [showForm, setShowForm] = useState(false);
-  const [performanceHistory, setPerformanceHistory] = useState<
-    { overall_performance: number; recorded_at: string | null }[]
-  >([]);
+  const [performanceHistory, setPerformanceHistory] = useState<PerformanceHistoryItem[]>([]);
+  const [chartType, setChartType] = useState<"area" | "bar">("area");
+
+  // Responsive: UseEffect to set mobile state
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const sizes = isMobile ? chartSizes.mobile : chartSizes.desktop;
 
   useEffect(() => {
     const fetchPlayerData = async () => {
@@ -181,17 +286,16 @@ export default function PlayerProfilePage() {
   const getPositionIcon = () => {
     if (!playerData) return null;
     const position = playerData.position.toLowerCase();
-    const iconClass = "text-2xl mr-2";
     if (position.includes('forward')) {
-      return <GiSoccerKick className={`${iconClass} text-red-500`} />;
+      return <GiSoccerKick className={`${sizes.icon} text-red-500`} />;
     } else if (position.includes('midfielder')) {
-      return <GiSoccerBall className={`${iconClass} text-blue-500`} />;
+      return <GiSoccerBall className={`${sizes.icon} text-blue-500`} />;
     } else if (position.includes('defender')) {
-      return <FaShieldAlt className={`${iconClass} text-green-500`} />;
+      return <FaShieldAlt className={`${sizes.icon} text-green-500`} />;
     } else if (position.includes('goalkeeper')) {
-      return <FaCross className={`${iconClass} text-purple-500`} />;
+      return <FaCross className={`${sizes.icon} text-purple-500`} />;
     }
-    return <FaUserAlt className={`${iconClass} text-gray-500`} />;
+    return <FaUserAlt className={`${sizes.icon} text-gray-500`} />;
   };
 
   const getPreferredFoot = () => {
@@ -199,7 +303,6 @@ export default function PlayerProfilePage() {
     return playerData?.preferred_foot_encoded === 1 ? 'Right' : 'Left';
   };
 
-  // FIX: Always convert work_rate_encoded to string for lookup
   const getWorkRate = () => {
     if (!playerData || playerData.work_rate_encoded === null) return 'Unknown';
     return workRateMap[String(playerData.work_rate_encoded)] || 'Unknown';
@@ -249,7 +352,7 @@ export default function PlayerProfilePage() {
         <h3 className="text-lg font-bold mb-4 text-[#28809A] flex items-center gap-2">
           <FaMedal className="text-yellow-400" /> {chartLabel}
         </h3>
-        <div className="h-64 flex items-center justify-center">
+        <div className={sizes.pieHeight + " flex items-center justify-center"}>
           <Pie
             data={{
               labels,
@@ -258,7 +361,7 @@ export default function PlayerProfilePage() {
                   label: chartLabel,
                   data,
                   backgroundColor: colorList,
-                  borderColor: "#fff",
+                  borderColor: colorPalette.white,
                   borderWidth: 2,
                 },
               ],
@@ -267,7 +370,7 @@ export default function PlayerProfilePage() {
               plugins: {
                 legend: {
                   display: true,
-                  position: "right" as const,
+                  position: isMobile ? "bottom" : "right",
                   labels: { boxWidth: 16, padding: 16 }
                 },
                 tooltip: {
@@ -327,28 +430,17 @@ export default function PlayerProfilePage() {
       StandTackle: playerData.standing_tackle,
       SlideTackle: playerData.sliding_tackle,
     };
-    const colorsPhysical = [
-      "#28809A", "#4FD1C5", "#A0AEC0", "#63B3ED", "#F6E05E", "#FC8181", "#B794F4", "#F687B3", "#2C5282"
-    ];
-    const colorsTechnical = [
-      "#38B2AC", "#4299E1", "#BEE3F8", "#805AD5", "#68D391", "#F56565", "#ECC94B", "#D69E2E", "#ED8936", "#718096", "#A0AEC0", "#E53E3E"
-    ];
-    const colorsMental = [
-      "#B794F4", "#F6E05E", "#A0AEC0", "#FC8181", "#28809A"
-    ];
-    const colorsDefensive = [
-      "#2C5282", "#38B2AC", "#BEE3F8", "#F56565"
-    ];
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 mb-8">
-        {renderPieChart(physical, "Physical Attributes", colorsPhysical)}
-        {renderPieChart(technical, "Technical Skills", colorsTechnical)}
-        {renderPieChart(mental, "Mental Attributes", colorsMental)}
-        {renderPieChart(defensive, "Defensive Skills", colorsDefensive)}
+      <div className={`grid grid-cols-1 ${isMobile ? '' : 'md:grid-cols-2 xl:grid-cols-4'} gap-8 mb-8`}>
+        {renderPieChart(physical, "Physical Attributes", chartColors.physical)}
+        {renderPieChart(technical, "Technical Skills", chartColors.technical)}
+        {renderPieChart(mental, "Mental Attributes", chartColors.mental)}
+        {renderPieChart(defensive, "Defensive Skills", chartColors.defensive)}
       </div>
     );
   };
 
+  // Radar chart with improved position and size
   const renderRadarChart = () => {
     const averages = calculateAttributeAverages();
     if (!averages) return null;
@@ -360,10 +452,10 @@ export default function PlayerProfilePage() {
         {
           label: 'Attribute Averages',
           data: Object.values(averages),
-          backgroundColor: 'rgba(40, 128, 154, 0.15)',
-          borderColor: 'rgba(40, 128, 154, 1)',
+          backgroundColor: 'rgba(59, 130, 246, 0.15)', // blue-500 15%
+          borderColor: colorPalette.blue,
           borderWidth: 3,
-          pointBackgroundColor: 'rgba(40, 128, 154, 1)',
+          pointBackgroundColor: colorPalette.blue,
           pointRadius: 5
         }
       ]
@@ -388,78 +480,175 @@ export default function PlayerProfilePage() {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100"
+        className={`bg-white p-6 rounded-2xl shadow-xl border border-gray-100 flex flex-col items-center justify-center`}
+        style={{
+          minHeight: isMobile ? 260 : 380,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
       >
         <h3 className="text-lg font-bold mb-4 text-[#28809A] flex items-center gap-2">
           <FaMedal className="text-yellow-400" /> Attribute Averages
         </h3>
-        <div className="h-72">
+        <div className={sizes.radarHeight + " w-full flex items-center justify-center"}>
           <Radar data={data} options={options} />
         </div>
       </motion.div>
     );
   };
 
-  // Performance chart (Bar)
+  // Enhanced Performance Over Time using recharts
   const renderPerformanceChart = () => {
-    if (!performanceHistory || performanceHistory.length === 0) {
+    if (loading) {
       return (
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100"
-        >
-          <h3 className="text-lg font-bold mb-4 text-[#28809A] flex items-center gap-2">
-            <FaBolt /> Performance Over Time
-          </h3>
-          <p>No performance data available.</p>
-        </motion.div>
+        <div className="w-full p-4 rounded-xl">
+          <div className="animate-pulse">
+            <div className="h-5 w-3/4 bg-gray-200 rounded mb-4"></div>
+            <div className="w-full h-32 bg-gray-100 rounded"></div>
+          </div>
+        </div>
       );
     }
-    const labels = performanceHistory.map((item, idx) =>
-      item.recorded_at
-        ? new Date(item.recorded_at).toLocaleDateString(undefined, { year: '2-digit', month: 'short', day: '2-digit' })
-        : `Current`
-    );
-    const dataPoints = performanceHistory.map(item => item.overall_performance);
-    const performanceData = {
-      labels,
-      datasets: [
-        {
-          label: 'Overall Performance',
-          data: dataPoints,
-          backgroundColor: 'rgba(40, 128, 154, 0.7)',
-          borderColor: 'rgba(40, 128, 154, 1)',
-          borderWidth: 2,
-          borderRadius: 4
-        }
-      ]
-    };
-    const options = {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: false,
-          min: Math.max(Math.min(...dataPoints) - 5, 0),
-          max: Math.max(...dataPoints) + 5,
-          grid: { color: 'rgba(200, 200, 200, 0.1)' },
-          ticks: { stepSize: 10 }
-        },
-        x: { grid: { display: false } }
-      },
-      plugins: { legend: { display: false } }
-    };
+    if (error) {
+      return (
+        <div className="w-full p-4 rounded-xl text-black text-sm flex flex-col items-center justify-center border border-gray-200">
+          <FaRegSadTear className="text-2xl mb-2" />
+          <span>No graph available</span>
+        </div>
+      );
+    }
+    if (!performanceHistory || performanceHistory.length === 0) {
+      return (
+        <div className="w-full p-4 rounded-xl text-gray-500 text-sm border border-gray-200">
+          No data available
+        </div>
+      );
+    }
+
+    const chartData = performanceHistory.map((item) => {
+      let label: string;
+      if (item.recorded_at) {
+        const date = new Date(item.recorded_at);
+        label = date.toLocaleString('default', { month: 'short' }) + " " + date.getFullYear();
+      } else {
+        label = "Current";
+      }
+      return {
+        month: label,
+        rating: item.overall_performance,
+        fullDate: item.recorded_at,
+      };
+    });
+
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100"
       >
-        <h3 className="text-lg font-bold mb-4 text-[#28809A] flex items-center gap-2">
-          <FaBolt /> Performance Over Time
-        </h3>
-        <div className="h-72">
-          <Bar data={performanceData} options={options} />
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-2 gap-2">
+          <h3 className="text-lg font-bold text-[#28809A] flex items-center gap-2 mb-2">
+            <FaBolt /> Performance Over Time
+          </h3>
+          <div className="flex space-x-1 self-end md:self-auto">
+            <button 
+              onClick={() => setChartType("area")}
+              className={`px-2 py-1 text-xs rounded ${chartType === "area" ? "bg-black text-white" : "bg-gray-200"}`}
+            >
+              Area
+            </button>
+            <button 
+              onClick={() => setChartType("bar")}
+              className={`px-2 py-1 text-xs rounded ${chartType === "bar" ? "bg-black text-white" : "bg-gray-200"}`}
+            >
+              Bar
+            </button>
+          </div>
+        </div>
+        <div className="w-full h-56">
+          <ResponsiveContainer width="100%" height="100%">
+            {chartType === "area" ? (
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
+                <defs>
+                  <linearGradient id="colorRating" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  horizontal={true}
+                  vertical={false}
+                  stroke="#e5e7eb"
+                />
+                <XAxis 
+                  dataKey="month" 
+                  tick={{ fill: '#0c2830', fontSize: 12 }}
+                />
+                <YAxis 
+                  domain={['dataMin - 5', 'dataMax + 5']} 
+                  tick={{ fill: '#0c2830', fontSize: 12 }}
+                />
+                <RechartsTooltip
+                  contentStyle={{
+                    backgroundColor: "rgba(255,255,255,0.95)",
+                    borderRadius: "8px",
+                    border: "1px solid #e5e7eb",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                  }}
+                  labelStyle={{ color: "#3B82F6", fontWeight: "bold", fontSize: 14 }}
+                  itemStyle={{ color: "#0c2830", fontSize: 13 }}
+                  formatter={(value: number) => [`Rating: ${value.toFixed(1)}`, '']}
+                  labelFormatter={(label) => `Date: ${label}`}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="rating"
+                  stroke="#3B82F6"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorRating)"
+                  activeDot={{ r: 6, fill: "#3B82F6", stroke: "#fff", strokeWidth: 2 }}
+                />
+              </AreaChart>
+            ) : (
+              <BarChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  horizontal={true}
+                  vertical={false}
+                  stroke="#e5e7eb"
+                />
+                <XAxis 
+                  dataKey="month" 
+                  tick={{ fill: '#0c2830', fontSize: 12 }}
+                />
+                <YAxis 
+                  domain={['dataMin - 5', 'dataMax + 5']} 
+                  tick={{ fill: '#0c2830', fontSize: 12 }}
+                />
+                <RechartsTooltip
+                  contentStyle={{
+                    backgroundColor: "rgba(255,255,255,0.95)",
+                    borderRadius: "8px",
+                    border: "1px solid #e5e7eb",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                  }}
+                  labelStyle={{ color: "#3B82F6", fontWeight: "bold", fontSize: 14 }}
+                  itemStyle={{ color: "#0c2830", fontSize: 13 }}
+                  formatter={(value: number) => [`Rating: ${value.toFixed(1)}`, '']}
+                  labelFormatter={(label) => `Date: ${label}`}
+                />
+                <Bar
+                  dataKey="rating"
+                  fill="#3B82F6"
+                  radius={[4, 4, 0, 0]}
+                  barSize={24}
+                />
+              </BarChart>
+            )}
+          </ResponsiveContainer>
         </div>
       </motion.div>
     );
@@ -470,9 +659,9 @@ export default function PlayerProfilePage() {
     return (
       <motion.div 
         whileHover={{ scale: 1.04 }}
-        className="bg-white p-4 rounded-xl shadow border border-gray-100 flex items-center gap-3 transition-all"
+        className={`bg-white p-4 rounded-xl shadow border border-gray-100 flex items-center gap-3 transition-all ${isMobile ? "text-sm" : ""}`}
       >
-        <div className="text-[#28809A] text-xl">{icon}</div>
+        <div className="text-blue-500 text-xl">{icon}</div>
         <div>
           <h3 className="text-xs font-semibold text-gray-700">{title}</h3>
           <p className="text-lg font-bold text-gray-900">{value}</p>
@@ -531,14 +720,14 @@ export default function PlayerProfilePage() {
   }
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-[#28809A] to-[#0c2830] p-8 text-white shadow-lg rounded-b-3xl border-b-8   top-0 z-30"
+        className={`bg-gradient-to-r from-blue-500 to-indigo-600 ${isMobile ? "p-4" : "p-8"} text-white shadow-lg rounded-b-3xl border-b-8 top-0 z-30`}
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className={`mx-auto flex ${isMobile ? "flex-col gap-4" : "items-center justify-between max-w-7xl"}`}>
           <div className="flex items-center gap-4">
             <button
               className="bg-white/20 hover:bg-white/40 rounded-full p-2 transition"
@@ -547,10 +736,10 @@ export default function PlayerProfilePage() {
             >
               <FaChevronLeft size={20} />
             </button>
-            <GiSoccerBall className="text-4xl" />
-            <h1 className="text-3xl font-extrabold tracking-widest drop-shadow-lg">Player Profile</h1>
+            <GiSoccerBall className={sizes.headerIcon} />
+            <h1 className={`${sizes.title} font-extrabold tracking-widest drop-shadow-lg`}>Player Profile</h1>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className={`flex items-center ${isMobile ? "flex-wrap gap-2 mt-2" : "space-x-4"}`}>
             <div className="bg-white/20 rounded-full px-5 py-2 text-base font-bold tracking-wide">
               ID: {playerData.player_id}
             </div>
@@ -558,45 +747,45 @@ export default function PlayerProfilePage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 bg-white text-[#0c2830] hover:bg-slate-50 px-6 py-2 rounded-xl font-bold shadow-md transition"
+              className="flex items-center gap-2 bg-white text-[#0c2830] hover:bg-slate-50 px-4 py-2 rounded-xl font-bold shadow-md transition"
             >
               <FaPlus className="mr-1" />
-              Enter New Data
+              <span>{isMobile ? "Add Data" : "Enter New Data"}</span>
             </motion.button>
           </div>
         </div>
       </motion.div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className={`mx-auto ${isMobile ? "px-2 py-4" : "max-w-7xl px-4 py-8"}`}>
         {/* Player Info Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl shadow-2xl overflow-hidden mb-10 border border-gray-100"
+          className={`bg-white rounded-3xl shadow-2xl overflow-hidden mb-10 border border-gray-100`}
         >
-          <div className="md:flex">
-            <div className="md:w-1/3 bg-gradient-to-b from-[#28809A] to-[#1e6a80] p-7 text-white flex flex-col items-center justify-center">
-              <div className="w-40 h-40 bg-white/20 rounded-full flex items-center justify-center mb-6 shadow-lg border-4 ">
-                <FaUserAlt className="text-7xl" />
+          <div className={`${isMobile ? "" : "md:flex"}`}>
+            <div className={`${isMobile ? "p-4" : "md:w-1/3 p-7"} bg-gradient-to-b from-blue-500 to-indigo-600 text-white flex flex-col items-center justify-center`}>
+              <div className={`${sizes.avatar} bg-white/20 rounded-full flex items-center justify-center shadow-lg border-4`}>
+                <FaUserAlt className={sizes.avatarIcon} />
               </div>
-              <h2 className="text-3xl font-extrabold text-center drop-shadow-lg">{playerData.player_name}</h2>
+              <h2 className={`${sizes.title} font-extrabold text-center drop-shadow-lg`}>{playerData.player_name}</h2>
               <div className="flex items-center mt-4">
                 {getPositionIcon()}
-                <span className="text-xl font-bold">{playerData.position}</span>
+                <span className={`${isMobile ? "text-base" : "text-xl"} font-bold`}>{playerData.position}</span>
               </div>
               <div className="mt-6 text-center">
                 <p className="text-base opacity-80">Overall</p>
-                <div className="text-5xl font-extrabold drop-shadow-lg">
+                <div className={`${sizes.overall} font-extrabold drop-shadow-lg`}>
                   {playerData.overall_performance || 'N/A'}
                 </div>
               </div>
             </div>
 
-            <div className="md:w-2/3 p-8 bg-white">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className={`${isMobile ? "p-4" : "md:w-2/3 p-8"} bg-white`}>
+              <div className={`grid grid-cols-1 ${isMobile ? "" : "md:grid-cols-2"} gap-8`}>
                 <div>
-                  <h3 className="text-xl font-bold text-[#28809A] mb-4">Personal Info</h3>
+                  <h3 className="text-xl font-bold text-blue-500 mb-4">Personal Info</h3>
                   <div className="space-y-3">
                     <div>
                       <p className="text-sm text-gray-900">Email</p>
@@ -644,14 +833,14 @@ export default function PlayerProfilePage() {
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-bold text-[#28809A] mb-4">Key Attributes</h3>
+                  <h3 className="text-xl font-bold text-blue-500 mb-4">Key Attributes</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    {renderStatCard(<FaBolt />, 'Speed', 
+                    {renderStatCard(<FaBolt className="text-blue-500" />, 'Speed', 
                       Math.round(((playerData.acceleration || 0) + (playerData.sprint_speed || 0)) / 2))}
-                    {renderStatCard(<GiSoccerBall />, 'Dribbling', playerData.dribbling)}
-                    {renderStatCard(<GiSoccerKick />, 'Shooting', 
+                    {renderStatCard(<GiSoccerBall className="text-blue-500" />, 'Dribbling', playerData.dribbling)}
+                    {renderStatCard(<GiSoccerKick className="text-yellow-500" />, 'Shooting', 
                       Math.round(((playerData.finishing || 0) + (playerData.long_shots || 0) + (playerData.shot_power || 0)) / 3))}
-                    {renderStatCard(<FaShieldAlt />, 'Defense', 
+                    {renderStatCard(<FaShieldAlt className="text-green-500" />, 'Defense', 
                       Math.round(((playerData.marking || 0) + (playerData.standing_tackle || 0) + (playerData.interceptions || 0)) / 3))}
                   </div>
                 </div>
@@ -668,8 +857,8 @@ export default function PlayerProfilePage() {
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 px-6 py-4 font-bold transition border-b-4 ${
                 activeTab === tab.key 
-                  ? 'text-[#28809A] border-[#28809A] bg-[#e0f2fe]' 
-                  : 'text-gray-700 border-transparent hover:text-[#28809A] hover:bg-[#f8fafc]'
+                  ? 'text-blue-500 border-blue-500 bg-blue-50' 
+                  : 'text-gray-700 border-transparent hover:text-blue-500 hover:bg-gray-50'
               }`}
             >
               {tab.icon}
@@ -686,7 +875,7 @@ export default function PlayerProfilePage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-10"
+              className={`grid grid-cols-1 ${isMobile ? '' : 'lg:grid-cols-2'} gap-10`}
             >
               {renderRadarChart()}
               <motion.div 
@@ -694,20 +883,20 @@ export default function PlayerProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100"
               >
-                <h3 className="text-lg font-bold mb-4 text-[#28809A] flex items-center gap-2">
+                <h3 className="text-lg font-bold mb-4 text-blue-500 flex items-center gap-2">
                   <FaMedal className="text-yellow-400" /> Attribute Summary
                 </h3>
                 <div className="space-y-6">
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm font-bold text-gray-700">Physical</span>
-                      <span className="text-sm font-bold text-[#28809A]">
+                      <span className="text-sm font-bold text-blue-500">
                         {calculateAttributeAverages()?.physical || 'N/A'}
                       </span>
                     </div>
                     <div className="w-full bg-gray-100 rounded-full h-3">
                       <div 
-                        className="bg-gradient-to-r from-[#28809A] to-[#A7F3D0] h-3 rounded-full transition-all duration-500" 
+                        className="bg-gradient-to-r from-blue-500 to-green-200 h-3 rounded-full transition-all duration-500" 
                         style={{ width: `${calculateAttributeAverages()?.physical || 0}%` }}
                       ></div>
                     </div>
@@ -715,13 +904,13 @@ export default function PlayerProfilePage() {
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm font-bold text-gray-700">Technical</span>
-                      <span className="text-sm font-bold text-[#28809A]">
+                      <span className="text-sm font-bold text-blue-500">
                         {calculateAttributeAverages()?.technical || 'N/A'}
                       </span>
                     </div>
                     <div className="w-full bg-gray-100 rounded-full h-3">
                       <div 
-                        className="bg-gradient-to-r from-[#28809A] to-[#A7F3D0] h-3 rounded-full transition-all duration-500" 
+                        className="bg-gradient-to-r from-blue-500 to-green-200 h-3 rounded-full transition-all duration-500" 
                         style={{ width: `${calculateAttributeAverages()?.technical || 0}%` }}
                       ></div>
                     </div>
@@ -729,13 +918,13 @@ export default function PlayerProfilePage() {
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm font-bold text-gray-700">Mental</span>
-                      <span className="text-sm font-bold text-[#28809A]">
+                      <span className="text-sm font-bold text-blue-500">
                         {calculateAttributeAverages()?.mental || 'N/A'}
                       </span>
                     </div>
                     <div className="w-full bg-gray-100 rounded-full h-3">
                       <div 
-                        className="bg-gradient-to-r from-[#28809A] to-[#A7F3D0] h-3 rounded-full transition-all duration-500" 
+                        className="bg-gradient-to-r from-blue-500 to-green-200 h-3 rounded-full transition-all duration-500" 
                         style={{ width: `${calculateAttributeAverages()?.mental || 0}%` }}
                       ></div>
                     </div>
@@ -745,13 +934,13 @@ export default function PlayerProfilePage() {
                     <div>
                       <div className="flex justify-between mb-1">
                         <span className="text-sm font-bold text-gray-700">Defensive</span>
-                        <span className="text-sm font-bold text-[#28809A]">
+                        <span className="text-sm font-bold text-blue-500">
                           {calculateAttributeAverages()?.defensive || 'N/A'}
                         </span>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-3">
                         <div 
-                          className="bg-gradient-to-r from-[#28809A] to-[#A7F3D0] h-3 rounded-full transition-all duration-500" 
+                          className="bg-gradient-to-r from-blue-500 to-green-200 h-3 rounded-full transition-all duration-500" 
                           style={{ width: `${calculateAttributeAverages()?.defensive || 0}%` }}
                         ></div>
                       </div>
@@ -772,22 +961,22 @@ export default function PlayerProfilePage() {
               className="space-y-12"
             >
               {renderDetailedStatsCharts()}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className={`grid grid-cols-1 ${isMobile ? "" : "md:grid-cols-2 lg:grid-cols-3"} gap-8`}>
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100"
                 >
-                  <h3 className="text-lg font-bold mb-4 text-[#28809A]">Physical Attributes</h3>
+                  <h3 className="text-lg font-bold mb-4 text-blue-500">Physical Attributes</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    {renderStatCard(<IoMdSend />, 'Acceleration', playerData.acceleration)}
-                    {renderStatCard(<FaBolt />, 'Sprint Speed', playerData.sprint_speed)}
-                    {renderStatCard(<FaRunning />, 'Agility', playerData.agility)}
-                    {renderStatCard(<FaStopwatch />, 'Reactions', playerData.reactions)}
-                    {renderStatCard(<FaDumbbell />, 'Strength', playerData.strength)}
-                    {renderStatCard(<GiStrong />, 'Stamina', playerData.stamina)}
-                    {renderStatCard(<FaBullseye />, 'Jumping', playerData.jumping)}
-                    {renderStatCard(<RiSwordFill />, 'Aggression', playerData.aggression)}
+                    {renderStatCard(<IoMdSend className="text-blue-500" />, 'Acceleration', playerData.acceleration)}
+                    {renderStatCard(<FaBolt className="text-blue-500" />, 'Sprint Speed', playerData.sprint_speed)}
+                    {renderStatCard(<FaRunning className="text-green-500" />, 'Agility', playerData.agility)}
+                    {renderStatCard(<FaStopwatch className="text-yellow-500" />, 'Reactions', playerData.reactions)}
+                    {renderStatCard(<FaDumbbell className="text-purple-500" />, 'Strength', playerData.strength)}
+                    {renderStatCard(<GiStrong className="text-green-500" />, 'Stamina', playerData.stamina)}
+                    {renderStatCard(<FaBullseye className="text-blue-500" />, 'Jumping', playerData.jumping)}
+                    {renderStatCard(<RiSwordFill className="text-red-500" />, 'Aggression', playerData.aggression)}
                   </div>
                 </motion.div>
                 <motion.div 
@@ -795,16 +984,16 @@ export default function PlayerProfilePage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100"
                 >
-                  <h3 className="text-lg font-bold mb-4 text-[#28809A]">Technical Skills</h3>
+                  <h3 className="text-lg font-bold mb-4 text-green-500">Technical Skills</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    {renderStatCard(<GiSoccerBall />, 'Ball Control', playerData.ball_control)}
-                    {renderStatCard(<FaFutbol />, 'Dribbling', playerData.dribbling)}
-                    {renderStatCard(<GiSoccerKick />, 'Finishing', playerData.finishing)}
-                    {renderStatCard(<GiSoccerField />, 'Long Shots', playerData.long_shots)}
-                    {renderStatCard(<FaCross />, 'Crossing', playerData.crossing)}
-                    {renderStatCard(<FaShoePrints />, 'Short Passing', playerData.short_passing)}
-                    {renderStatCard(<FaTachometerAlt />, 'Long Passing', playerData.long_passing)}
-                    {renderStatCard(<FaFistRaised />, 'Shot Power', playerData.shot_power)}
+                    {renderStatCard(<GiSoccerBall className="text-blue-500" />, 'Ball Control', playerData.ball_control)}
+                    {renderStatCard(<FaFutbol className="text-green-500" />, 'Dribbling', playerData.dribbling)}
+                    {renderStatCard(<GiSoccerKick className="text-yellow-500" />, 'Finishing', playerData.finishing)}
+                    {renderStatCard(<GiSoccerField className="text-amber-500" />, 'Long Shots', playerData.long_shots)}
+                    {renderStatCard(<FaCross className="text-purple-500" />, 'Crossing', playerData.crossing)}
+                    {renderStatCard(<FaShoePrints className="text-purple-500" />, 'Short Passing', playerData.short_passing)}
+                    {renderStatCard(<FaTachometerAlt className="text-indigo-500" />, 'Long Passing', playerData.long_passing)}
+                    {renderStatCard(<FaFistRaised className="text-red-500" />, 'Shot Power', playerData.shot_power)}
                   </div>
                 </motion.div>
                 <motion.div 
@@ -812,16 +1001,16 @@ export default function PlayerProfilePage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100"
                 >
-                  <h3 className="text-lg font-bold mb-4 text-[#28809A]">Mental & Defensive</h3>
+                  <h3 className="text-lg font-bold mb-4 text-purple-500">Mental & Defensive</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    {renderStatCard(<FaEye />, 'Positioning', playerData.positioning)}
-                    {renderStatCard(<FaBrain />, 'Vision', playerData.vision)}
-                    {renderStatCard(<FaShieldAlt />, 'Composure', playerData.composure)}
-                    {renderStatCard(<FaBullseye />, 'Penalties', playerData.penalties)}
-                    {renderStatCard(<FaShieldAlt />, 'Interceptions', playerData.interceptions)}
-                    {renderStatCard(<FaShieldAlt />, 'Marking', playerData.marking)}
-                    {renderStatCard(<FaShieldAlt />, 'Stand Tackle', playerData.standing_tackle)}
-                    {renderStatCard(<FaShieldAlt />, 'Slide Tackle', playerData.sliding_tackle)}
+                    {renderStatCard(<FaEye className="text-green-500" />, 'Positioning', playerData.positioning)}
+                    {renderStatCard(<FaBrain className="text-purple-500" />, 'Vision', playerData.vision)}
+                    {renderStatCard(<FaShieldAlt className="text-blue-500" />, 'Composure', playerData.composure)}
+                    {renderStatCard(<FaBullseye className="text-yellow-500" />, 'Penalties', playerData.penalties)}
+                    {renderStatCard(<FaShieldAlt className="text-blue-500" />, 'Interceptions', playerData.interceptions)}
+                    {renderStatCard(<FaShieldAlt className="text-green-500" />, 'Marking', playerData.marking)}
+                    {renderStatCard(<FaShieldAlt className="text-purple-500" />, 'Stand Tackle', playerData.standing_tackle)}
+                    {renderStatCard(<FaShieldAlt className="text-red-500" />, 'Slide Tackle', playerData.sliding_tackle)}
                   </div>
                 </motion.div>
                 <motion.div 
@@ -829,16 +1018,16 @@ export default function PlayerProfilePage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100"
                 >
-                  <h3 className="text-lg font-bold mb-4 text-[#28809A]">Other Skills</h3>
+                  <h3 className="text-lg font-bold mb-4 text-yellow-500">Other Skills</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    {renderStatCard(<FaShoePrints />, 'Weak Foot', playerData.weak_foot)}
-                    {renderStatCard(<FaFutbol />, 'Skill Moves', playerData.skill_moves)}
-                    {renderStatCard(<GiSoccerKick />, 'Free Kick Accuracy', playerData.freekick_accuracy)}
-                    {renderStatCard(<FaCross />, 'Curve', playerData.curve)}
-                    {renderStatCard(<FaBullseye />, 'Heading Accuracy', playerData.heading_accuracy)}
-                    {renderStatCard(<GiSoccerBall />, 'Volleys', playerData.volleys)}
-                    {renderStatCard(<FaFire />, 'Work Rate', playerData.work_rate_encoded)}
-                    {renderStatCard(<FaClock />, 'Balance', playerData.balance)}
+                    {renderStatCard(<FaShoePrints className="text-green-500" />, 'Weak Foot', playerData.weak_foot)}
+                    {renderStatCard(<FaFutbol className="text-blue-500" />, 'Skill Moves', playerData.skill_moves)}
+                    {renderStatCard(<GiSoccerKick className="text-yellow-500" />, 'Free Kick Accuracy', playerData.freekick_accuracy)}
+                    {renderStatCard(<FaCross className="text-purple-500" />, 'Curve', playerData.curve)}
+                    {renderStatCard(<FaBullseye className="text-blue-500" />, 'Heading Accuracy', playerData.heading_accuracy)}
+                    {renderStatCard(<GiSoccerBall className="text-green-500" />, 'Volleys', playerData.volleys)}
+                    {renderStatCard(<FaFire className="text-red-500" />, 'Work Rate', playerData.work_rate_encoded)}
+                    {renderStatCard(<FaClock className="text-indigo-500" />, 'Balance', playerData.balance)}
                   </div>
                 </motion.div>
               </div>
@@ -860,7 +1049,7 @@ export default function PlayerProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100"
               >
-                <h3 className="text-lg font-bold mb-4 text-[#28809A] flex items-center gap-2">
+                <h3 className="text-lg font-bold mb-4 text-blue-500 flex items-center gap-2">
                   <GiSoccerBall /> Recent performance
                 </h3>
                 <div className="space-y-4">
@@ -868,11 +1057,11 @@ export default function PlayerProfilePage() {
                     <motion.div
                       key={idx}
                       whileHover={{ x: 5 }}
-                      className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-[#e0f2fe] to-[#f8fafc] border border-gray-100 shadow-sm"
+                      className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-blue-50 to-gray-50 border border-gray-100 shadow-sm"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-[#28809A]/10 flex items-center justify-center shadow">
-                          <GiSoccerBall className="text-[#28809A]" size={22} />
+                        <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center shadow">
+                          <GiSoccerBall className="text-blue-500" size={22} />
                         </div>
                         <div>
                           <p className="font-bold text-gray-900">overall {idx + 1}</p>
@@ -885,7 +1074,7 @@ export default function PlayerProfilePage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-lg text-[#28809A]">{item.overall_performance}</span>
+                        <span className="font-extrabold text-lg text-blue-500">{item.overall_performance}</span>
                         <div className={`w-4 h-4 rounded-full ${
                           item.overall_performance >= 80 ? 'bg-green-400' :
                           item.overall_performance >= 70 ? 'bg-yellow-400' : 'bg-red-400'
@@ -922,7 +1111,7 @@ export default function PlayerProfilePage() {
             >
               <div className="p-8">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-[#28809A]">Update Player Data</h2>
+                  <h2 className="text-2xl font-bold text-blue-500">Update Player Data</h2>
                   <button 
                     onClick={() => setShowForm(false)}
                     className="text-gray-700 text-2xl hover:text-red-500"

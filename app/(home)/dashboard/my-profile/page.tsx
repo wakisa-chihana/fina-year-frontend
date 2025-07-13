@@ -210,8 +210,8 @@ const Profile = () => {
   }, [userId, fetchProfile]);
 
   return (
-    <div className="relative w-full min-h-screen mt-20 px-4 md:px-8 lg:px-16 py-8 bg-slate-100">
-      <h1 className="ml-2 text-dark text-center text-opacity-20 text-xl mb-2 font-extrabold">my profile</h1>
+    <div className="relative w-full min-h-screen mt-20 px-4 md:px-8 lg:px-16 py-8 bg-[#f7f9f9]">
+      <h1 className="ml-2 text-[#0f1419] text-center text-opacity-80 text-xl mb-2 font-extrabold">my profile</h1>
       <Toaster position="top-center" />
       
       {isLoading && <LoadingAnimation />}
@@ -237,23 +237,23 @@ const Profile = () => {
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-white rounded-xl shadow-lg overflow-hidden border border-blue-100"
+          className="bg-white rounded-xl shadow-sm overflow-hidden border border-[#e7e7e8]"
         >
-          <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6">
+          <div className="bg-[#f7f9f9] p-6">
             <div className="flex flex-col md:flex-row items-center gap-6">
               <motion.div 
                 whileHover={{ scale: 1.05 }}
-                className="w-24 h-24 rounded-full border-4 border-white bg-blue-200 flex items-center justify-center shadow-lg"
+                className="w-24 h-24 rounded-full border-4 border-white bg-[#1d9bf0] flex items-center justify-center shadow-lg"
               >
-                <span className="text-3xl font-bold text-blue-700">
+                <span className="text-3xl font-bold text-white">
                   {profile?.name?.charAt(0)?.toUpperCase() || "U"}
                 </span>
               </motion.div>
               
               <div className="flex-1 text-center md:text-left">
-                <h1 className="text-2xl font-bold text-gray-800">{profile?.name || "User"}</h1>
-                <p className="text-blue-600 font-medium">{userRole}</p>
-                <p className="text-gray-600 mt-1">{profile?.email}</p>
+                <h1 className="text-2xl font-bold text-[#0f1419]">{profile?.name || "User"}</h1>
+                <p className="text-[#1d9bf0] font-medium">{userRole}</p>
+                <p className="text-[#536471] mt-1">{profile?.email}</p>
               </div>
               
               <div className="flex flex-wrap justify-center gap-3">
@@ -262,7 +262,7 @@ const Profile = () => {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setEditMode(null)}
-                    className="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-200 transition flex items-center gap-2"
+                    className="bg-[#eff3f4] text-[#0f1419] px-4 py-2 rounded-full font-medium hover:bg-[#e7e7e8] transition flex items-center gap-2"
                   >
                     <span>Cancel</span>
                   </motion.button>
@@ -272,7 +272,7 @@ const Profile = () => {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setEditMode("info")}
-                      className="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-200 transition flex items-center gap-2"
+                      className="bg-[#e8f5fd] text-[#1d9bf0] px-4 py-2 rounded-full font-medium hover:bg-[#d1ebfc] transition flex items-center gap-2"
                     >
                       <FiEdit2 />
                       <span>Edit Profile</span>
@@ -281,7 +281,7 @@ const Profile = () => {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setEditMode("password")}
-                      className="bg-purple-100 text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-purple-200 transition flex items-center gap-2"
+                      className="bg-[#f7f9f9] text-[#0f1419] px-4 py-2 rounded-full font-medium hover:bg-[#e7e7e8] transition flex items-center gap-2"
                     >
                       <FiKey />
                       <span>Change Password</span>
@@ -290,7 +290,7 @@ const Profile = () => {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setShowDeleteModal(true)}
-                      className="bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-200 transition flex items-center gap-2"
+                      className="bg-[#f7e9e9] text-[#f4212e] px-4 py-2 rounded-full font-medium hover:bg-[#f7d7d7] transition flex items-center gap-2"
                     >
                       <FiTrash2 />
                       <span>Delete Account</span>
@@ -307,7 +307,7 @@ const Profile = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-xl shadow-lg overflow-hidden border border-blue-100 shadow-blue-200"
+          className="bg-white rounded-xl shadow-sm overflow-hidden border border-[#e7e7e8]"
         >
           <div className="p-6">
             {editMode === "info" ? (
@@ -320,34 +320,34 @@ const Profile = () => {
               >
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-gray-700 font-medium mb-2">Name</label>
+                    <label className="block text-[#0f1419] font-medium mb-2">Name</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FiUser className="text-gray-400" />
+                        <FiUser className="text-[#536471]" />
                       </div>
                       <input
                         type="text"
                         name="name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        className="w-full pl-10 pr-4 py-3 border rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        className="w-full pl-10 pr-4 py-3 border border-[#e7e7e8] rounded-lg text-[#0f1419] focus:ring-2 focus:ring-[#1d9bf0] focus:border-[#1d9bf0] transition"
                         required
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-gray-700 font-medium mb-2">Email</label>
+                    <label className="block text-[#0f1419] font-medium mb-2">Email</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FiMail className="text-gray-400" />
+                        <FiMail className="text-[#536471]" />
                       </div>
                       <input
                         type="email"
                         name="email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className="w-full pl-10 pr-4 py-3 border rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        className="w-full pl-10 pr-4 py-3 border border-[#e7e7e8] rounded-lg text-[#0f1419] focus:ring-2 focus:ring-[#1d9bf0] focus:border-[#1d9bf0] transition"
                         required
                       />
                     </div>
@@ -360,7 +360,7 @@ const Profile = () => {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setEditMode(null)}
-                    className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                    className="px-5 py-2.5 border border-[#e7e7e8] rounded-full text-[#0f1419] hover:bg-[#f7f9f9] transition"
                   >
                     Cancel
                   </motion.button>
@@ -368,7 +368,7 @@ const Profile = () => {
                     type="submit"
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
-                    className="px-5 py-2.5 bg-black text-white rounded-lg hover:bg-gradient-to-t from-gray-600 to-dark flex items-center justify-center min-w-[140px] transition"
+                    className="px-5 py-2.5 bg-[#0f1419] text-white rounded-full hover:bg-[#272c30] flex items-center justify-center min-w-[140px] transition"
                     disabled={isUpdating}
                   >
                     {isUpdating ? (
@@ -392,23 +392,23 @@ const Profile = () => {
               >
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-gray-700 font-medium mb-2">Current Password</label>
+                    <label className="block text-[#0f1419] font-medium mb-2">Current Password</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FiLock className="text-gray-400" />
+                        <FiLock className="text-[#536471]" />
                       </div>
                       <input
                         type={showPassword.current ? "text" : "password"}
                         name="current_password"
                         value={passwordData.current_password}
                         onChange={handlePasswordChange}
-                        className="w-full pl-10 pr-10 py-3 border rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        className="w-full pl-10 pr-10 py-3 border border-[#e7e7e8] rounded-lg text-[#0f1419] focus:ring-2 focus:ring-[#1d9bf0] focus:border-[#1d9bf0] transition"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility("current")}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#536471] hover:text-[#0f1419]"
                       >
                         {showPassword.current ? <FaEyeSlash /> : <FaEye />}
                       </button>
@@ -416,10 +416,10 @@ const Profile = () => {
                   </div>
 
                   <div ref={passwordRef}>
-                    <label className="block text-gray-700 font-medium mb-2">New Password</label>
+                    <label className="block text-[#0f1419] font-medium mb-2">New Password</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FiLock className="text-gray-400" />
+                        <FiLock className="text-[#536471]" />
                       </div>
                       <input
                         type={showPassword.new ? "text" : "password"}
@@ -427,13 +427,13 @@ const Profile = () => {
                         value={passwordData.new_password}
                         onChange={handlePasswordChange}
                         onFocus={() => setShowPasswordRequirements(true)}
-                        className="w-full pl-10 pr-10 py-3 border rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        className="w-full pl-10 pr-10 py-3 border border-[#e7e7e8] rounded-lg text-[#0f1419] focus:ring-2 focus:ring-[#1d9bf0] focus:border-[#1d9bf0] transition"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility("new")}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#536471] hover:text-[#0f1419]"
                       >
                         {showPassword.new ? <FaEyeSlash /> : <FaEye />}
                       </button>
@@ -445,24 +445,24 @@ const Profile = () => {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="mt-3 bg-blue-50 p-3 rounded-lg"
+                          className="mt-3 bg-[#e8f5fd] p-3 rounded-lg"
                         >
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Password Requirements:</h4>
+                          <h4 className="text-sm font-medium text-[#0f1419] mb-2">Password Requirements:</h4>
                           <ul className="space-y-1 text-sm">
-                            <li className={`flex items-center gap-2 ${hasMinLength ? 'text-green-600' : 'text-gray-500'}`}>
-                              {hasMinLength ? <FaCheck className="text-green-500" /> : <span className="w-4 h-4 inline-block"></span>}
+                            <li className={`flex items-center gap-2 ${hasMinLength ? 'text-[#00ba7c]' : 'text-[#536471]'}`}>
+                              {hasMinLength ? <FaCheck className="text-[#00ba7c]" /> : <span className="w-4 h-4 inline-block"></span>}
                               <span>At least 8 characters</span>
                             </li>
-                            <li className={`flex items-center gap-2 ${hasLetter ? 'text-green-600' : 'text-gray-500'}`}>
-                              {hasLetter ? <FaCheck className="text-green-500" /> : <span className="w-4 h-4 inline-block"></span>}
+                            <li className={`flex items-center gap-2 ${hasLetter ? 'text-[#00ba7c]' : 'text-[#536471]'}`}>
+                              {hasLetter ? <FaCheck className="text-[#00ba7c]" /> : <span className="w-4 h-4 inline-block"></span>}
                               <span>Contains letters</span>
                             </li>
-                            <li className={`flex items-center gap-2 ${hasNumber ? 'text-green-600' : 'text-gray-500'}`}>
-                              {hasNumber ? <FaCheck className="text-green-500" /> : <span className="w-4 h-4 inline-block"></span>}
+                            <li className={`flex items-center gap-2 ${hasNumber ? 'text-[#00ba7c]' : 'text-[#536471]'}`}>
+                              {hasNumber ? <FaCheck className="text-[#00ba7c]" /> : <span className="w-4 h-4 inline-block"></span>}
                               <span>Contains numbers</span>
                             </li>
-                            <li className={`flex items-center gap-2 ${hasSpecialChar ? 'text-green-600' : 'text-gray-500'}`}>
-                              {hasSpecialChar ? <FaCheck className="text-green-500" /> : <span className="w-4 h-4 inline-block"></span>}
+                            <li className={`flex items-center gap-2 ${hasSpecialChar ? 'text-[#00ba7c]' : 'text-[#536471]'}`}>
+                              {hasSpecialChar ? <FaCheck className="text-[#00ba7c]" /> : <span className="w-4 h-4 inline-block"></span>}
                               <span>Contains special characters (optional)</span>
                             </li>
                           </ul>
@@ -472,23 +472,23 @@ const Profile = () => {
                   </div>
 
                   <div>
-                    <label className="block text-gray-700 font-medium mb-2">Confirm New Password</label>
+                    <label className="block text-[#0f1419] font-medium mb-2">Confirm New Password</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FiLock className="text-gray-400" />
+                        <FiLock className="text-[#536471]" />
                       </div>
                       <input
                         type={showPassword.confirm ? "text" : "password"}
                         name="confirmPassword"
                         value={passwordData.confirmPassword}
                         onChange={handlePasswordChange}
-                        className="w-full pl-10 pr-10 py-3 border rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        className="w-full pl-10 pr-10 py-3 border border-[#e7e7e8] rounded-lg text-[#0f1419] focus:ring-2 focus:ring-[#1d9bf0] focus:border-[#1d9bf0] transition"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility("confirm")}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#536471] hover:text-[#0f1419]"
                       >
                         {showPassword.confirm ? <FaEyeSlash /> : <FaEye />}
                       </button>
@@ -499,11 +499,11 @@ const Profile = () => {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          className={`mt-2 text-sm flex items-center gap-2 ${passwordsMatch ? 'text-green-600' : 'text-red-600'}`}
+                          className={`mt-2 text-sm flex items-center gap-2 ${passwordsMatch ? 'text-[#00ba7c]' : 'text-[#f4212e]'}`}
                         >
                           {passwordsMatch ? (
                             <>
-                              <FaCheck className="text-green-500" />
+                              <FaCheck className="text-[#00ba7c]" />
                               <span>Passwords match</span>
                             </>
                           ) : (
@@ -524,7 +524,7 @@ const Profile = () => {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setEditMode(null)}
-                    className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                    className="px-5 py-2.5 border border-[#e7e7e8] rounded-full text-[#0f1419] hover:bg-[#f7f9f9] transition"
                   >
                     Cancel
                   </motion.button>
@@ -532,7 +532,7 @@ const Profile = () => {
                     type="submit"
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
-                    className="px-5 py-2.5 bg-black text-white rounded-lg hover:bg-gradient-to-tr from-gray-600 to-darkflex items-center justify-center min-w-[160px] transition"
+                    className="px-5 py-2.5 bg-[#0f1419] text-white rounded-full hover:bg-[#272c30] flex items-center justify-center min-w-[160px] transition"
                     disabled={isUpdating || !hasMinLength || !hasLetter || !hasNumber || !passwordsMatch}
                   >
                     {isUpdating ? (
@@ -549,12 +549,12 @@ const Profile = () => {
             ) : (
               <div className="space-y-8">
                 {/* About Section */}
-                <div className="border-b border-gray-200 pb-6">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <FiInfo className="text-blue-600" />
+                <div className="border-b border-[#e7e7e8] pb-6">
+                  <h2 className="text-xl font-semibold text-[#0f1419] mb-4 flex items-center gap-2">
+                    <FiInfo className="text-[#1d9bf0]" />
                     <span>About</span>
                   </h2>
-                  <p className="text-gray-700">
+                  <p className="text-[#0f1419]">
                     {profile?.bio || "No bio provided. You can add a bio to tell others more about yourself."}
                   </p>
                 </div>
@@ -563,32 +563,32 @@ const Profile = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Contact Information */}
                   <div>
-                    <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FiMail className="text-blue-600" />
+                    <h3 className="font-semibold text-[#0f1419] mb-4 flex items-center gap-2">
+                      <FiMail className="text-[#1d9bf0]" />
                       <span>Contact Information</span>
                     </h3>
                     <div className="space-y-3">
                       <div className="flex items-start">
-                        <span className="font-medium text-gray-700 min-w-[80px]">Email:</span>
-                        <span className="text-gray-600">{profile?.email}</span>
+                        <span className="font-medium text-[#0f1419] min-w-[80px]">Email:</span>
+                        <span className="text-[#536471]">{profile?.email}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Account Details */}
                   <div>
-                    <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FiUser className="text-blue-600" />
+                    <h3 className="font-semibold text-[#0f1419] mb-4 flex items-center gap-2">
+                      <FiUser className="text-[#1d9bf0]" />
                       <span>Account Details</span>
                     </h3>
                     <div className="space-y-3">
                       <div className="flex items-start">
-                        <span className="font-medium text-gray-700 min-w-[80px]">Role:</span>
-                        <span className="text-gray-600 capitalize">{userRole}</span>
+                        <span className="font-medium text-[#0f1419] min-w-[80px]">Role:</span>
+                        <span className="text-[#536471] capitalize">{userRole}</span>
                       </div>
                       <div className="flex items-start">
-                        <span className="font-medium text-gray-700 min-w-[80px]">Joined:</span>
-                        <span className="text-gray-600">
+                        <span className="font-medium text-[#0f1419] min-w-[80px]">Joined:</span>
+                        <span className="text-[#536471]">
                           {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : "N/A"}
                         </span>
                       </div>
@@ -598,11 +598,11 @@ const Profile = () => {
 
                 {/* Team Information (if applicable) */}
                 {profile?.team_id && (
-                  <div className="border-t border-gray-200 pt-6">
-                    <h3 className="font-semibold text-gray-800 mb-4">Team Information</h3>
+                  <div className="border-t border-[#e7e7e8] pt-6">
+                    <h3 className="font-semibold text-[#0f1419] mb-4">Team Information</h3>
                     <div className="flex items-start">
-                      <span className="font-medium text-gray-700 min-w-[80px]">Team ID:</span>
-                      <span className="text-gray-600">{profile.team_id}</span>
+                      <span className="font-medium text-[#0f1419] min-w-[80px]">Team ID:</span>
+                      <span className="text-[#536471]">{profile.team_id}</span>
                     </div>
                   </div>
                 )}

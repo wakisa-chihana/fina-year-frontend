@@ -57,26 +57,46 @@ const Page = () => {
   }
 
   return (
-    <div className="w-full">
-      {errorMessage && <div className="error-message">{errorMessage}</div>}
+    <div className="w-full bg-white min-h-screen">
+      {errorMessage && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mx-4 mt-[70px]">
+          {errorMessage}
+        </div>
+      )}
       {isLoading ? (
         <LoadingAnimation />
       ) : (
         <>
-          <section className="px-4 md:px-16 w-full mt-4 md:mt-0">
-            <div className="w-full mt-[70px] flex flex-col md:flex-row gap-4 md:justify-between py-4">
+          {/* Top Section - Maintains original PC layout */}
+          <section className="hidden md:block px-16 w-full mt-[70px]">
+            <div className="w-full flex flex-row gap-4 justify-between py-4">
               <TopPlayer />
               <TeamDetails />
               <TeamPerformance />
             </div>
           </section>
-          <section className="px-16 w-full">
-            <div className="w-full flex lg:flex-row flex-col gap-4 justify-between py-4">
+
+          {/* Bottom Section - Maintains original PC layout */}
+          <section className="hidden md:block px-16 w-full">
+            <div className="w-full flex flex-row gap-4 justify-between py-4">
               <Ranks />
               <TeamFormation />
               <Players />
             </div>
           </section>
+
+          {/* Mobile Responsive Version */}
+          <section className="md:hidden px-4 w-full mt-[70px]">
+            <div className="w-full flex flex-col gap-4 py-4">
+              <TopPlayer />
+              <TeamDetails />
+              <TeamPerformance />
+              <Ranks />
+              <TeamFormation />
+              <Players />
+            </div>
+          </section>
+
           {toggleCreateTeam && (
             <CreateTeam
               callBack={fetchTeam}

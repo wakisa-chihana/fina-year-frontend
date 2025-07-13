@@ -69,7 +69,7 @@ export default function RatingChart() {
 
   if (loading) {
     return (
-      <div className="w-[20%] bg-transparent p-4 rounded-xl">
+      <div className="w-full md:w-[20%] bg-transparent p-4 rounded-xl">
         <div className="animate-pulse">
           <div className="h-5 w-3/4 bg-gray-200 rounded mb-4"></div>
           <div className="w-full h-32 bg-gray-100 rounded"></div>
@@ -78,21 +78,18 @@ export default function RatingChart() {
     );
   }
 
-
-
-if (error) {
-  return (
-    <div className="w-[20%] bg-transparent p-4 rounded-xl text-dark text-sm flex flex-col items-center">
-      <FaRegSadTear className="text-2xl mb-2" />
-      <span>No graph available</span>
-    </div>
-  );
-}
-
+  if (error) {
+    return (
+      <div className="w-full md:w-[20%] bg-transparent p-4 rounded-xl text-black text-sm flex flex-col items-center justify-center border border-gray-200">
+        <FaRegSadTear className="text-2xl mb-2" />
+        <span>No graph available</span>
+      </div>
+    );
+  }
 
   if (!data) {
     return (
-      <div className="w-[20%] bg-transparent p-4 rounded-xl text-gray-500 text-sm">
+      <div className="w-full md:w-[20%] bg-transparent p-4 rounded-xl text-gray-500 text-sm border border-gray-200">
         No data available
       </div>
     );
@@ -115,12 +112,12 @@ if (error) {
   });
 
   return (
-    <div className="w-[20%] bg-transparent p-4 rounded-xl text-black">
-      <div className="flex justify-between items-center mb-2">
-        <p className="text-black font-bold">
+    <div className="w-full md:w-[20%] bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-2 gap-2">
+        <p className="text-black font-bold text-sm md:text-base truncate">
           {data.player_name}&apos;s performance
         </p>
-        <div className="flex space-x-1">
+        <div className="flex space-x-1 self-end md:self-auto">
           <button 
             onClick={() => setChartType("area")}
             className={`px-2 py-1 text-xs rounded ${chartType === "area" ? "bg-black text-white" : "bg-gray-200"}`}
@@ -136,7 +133,7 @@ if (error) {
         </div>
       </div>
       
-      <div className="w-full h-32">
+      <div className="w-full h-48 md:h-32">
         <ResponsiveContainer width="100%" height="100%">
           {chartType === "area" ? (
             <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
@@ -154,11 +151,11 @@ if (error) {
               />
               <XAxis 
                 dataKey="month" 
-                tick={{ fill: '#000000', fontSize: 12 }}
+                tick={{ fill: '#000000', fontSize: 10 }}
               />
               <YAxis 
                 domain={['dataMin - 5', 'dataMax + 5']} 
-                tick={{ fill: '#000000', fontSize: 12 }}
+                tick={{ fill: '#000000', fontSize: 10 }}
               />
               <Tooltip
                 contentStyle={{
@@ -192,11 +189,11 @@ if (error) {
               />
               <XAxis 
                 dataKey="month" 
-                tick={{ fill: '#000000', fontSize: 12 }}
+                tick={{ fill: '#000000', fontSize: 10 }}
               />
               <YAxis 
                 domain={['dataMin - 5', 'dataMax + 5']} 
-                tick={{ fill: '#000000', fontSize: 12 }}
+                tick={{ fill: '#000000', fontSize: 10 }}
               />
               <Tooltip
                 contentStyle={{

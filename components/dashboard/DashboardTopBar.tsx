@@ -1,5 +1,3 @@
-'dashboard/team-formation'
-
 'use client';
 
 import { memo, useState, useEffect, useCallback } from 'react';
@@ -8,42 +6,65 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import Cookie from "js-cookie";
-import { GiSoccerBall, GiSoccerField } from "react-icons/gi";
-import { FiMenu, FiX } from "react-icons/fi";
-import { IoIosArrowDown, IoIosPerson } from "react-icons/io";
-import { RiNotification3Line, RiDashboardFill } from "react-icons/ri";
+import { GiSoccerBall } from "react-icons/gi";
+import { FiMenu, FiX, FiUser, FiSettings, FiHelpCircle, FiLogOut } from "react-icons/fi";
+import { IoIosArrowDown } from "react-icons/io";
+import { RiNotification3Line } from "react-icons/ri";
 import { navTabs } from "@/constants/navTabs";
 import { baseUrl } from "@/constants/baseUrl";
 
+const sizeClasses = {
+  sm: "w-7 h-7",
+  md: "w-9 h-9",
+  lg: "w-11 h-11"
+};
+
+const fadeSpring = {
+  type: "spring" as const,
+  stiffness: 300,
+  damping: 30
+};
+
 const NotificationIcon = memo(function NotificationIcon() {
   const [hasUnread, setHasUnread] = useState(true);
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
-      setHasUnread(prev => Math.random() > 0.5);
+      setHasUnread(Math.random() > 0.5);
     }, 10000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="relative">
-      <RiNotification3Line size={20} className="text-gray-500 hover:text-gray-700 transition-colors" />
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={fadeSpring}
+      className="relative"
+    >
+      <motion.div
+        whileHover={{ scale: 1.15, rotate: -10 }}
+        whileTap={{ scale: 0.95 }}
+        transition={{ type: "spring", stiffness: 200, damping: 20 }}
+      >
+        <RiNotification3Line size={18} className="text-[#536471] hover:text-[#0f1419] transition-colors" />
+      </motion.div>
       {hasUnread && (
-        <motion.span 
-          className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"
-          initial={{ scale: 0 }}
-          animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [1, 0.8, 1]
+        <motion.span
+          className="absolute top-0 right-0 w-[6.5px] h-[6.5px] bg-[#f4212e] rounded-full"
+          initial={{ scale: 0.5, opacity: 0.6 }}
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [1, 0.7, 1]
           }}
-          transition={{ 
-            duration: 1.5,
+          transition={{
+            duration: 1.2,
             repeat: Infinity,
             ease: "easeInOut"
           }}
         />
       )}
-    </div>
+    </motion.div>
   );
 });
 
@@ -56,35 +77,41 @@ const UserProfileAvatar = memo(function UserProfileAvatar({
   name?: string;
   size?: "sm" | "md" | "lg";
 }) {
-  const sizeClasses = {
-    sm: "w-8 h-8",
-    md: "w-10 h-10",
-    lg: "w-12 h-12"
-  };
-
   const initials = name?.split(' ').map(n => n[0]).join('').toUpperCase();
+  const imageSize = 43;
 
   return (
-    <motion.div 
-      className={`${sizeClasses[size]} rounded-full overflow-hidden border-2 border-[#28809A] bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center relative`}
-      whileHover={{ scale: 1.05 }}
+    <motion.div
+      className={`${sizeClasses[size]} rounded-full overflow-hidden border-2 border-[#1d9bf0] bg-gradient-to-br from-[#e8f5fd] to-[#d1ebfc] flex items-center justify-center relative`}
+      whileHover={{ scale: 1.08, boxShadow: "0 2px 12px #1d9bf055" }}
       whileTap={{ scale: 0.95 }}
+      transition={fadeSpring}
     >
       {imageUrl ? (
-        <Image
-          src={imageUrl}
-          alt="Profile"
-          width={48}
-          height={48}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
-        />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={fadeSpring}
+        >
+          <Image
+            src={imageUrl}
+            alt="Profile"
+            width={imageSize}
+            height={imageSize}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        </motion.div>
       ) : (
-        <span className="font-semibold text-[#28809A] text-lg">
+        <motion.span
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="font-semibold text-[#1d9bf0] text-base"
+        >
           {initials || "U"}
-        </span>
+        </motion.span>
       )}
     </motion.div>
   );
@@ -109,58 +136,84 @@ const UserProfileDropdown = memo(function UserProfileDropdown({
   }, [isOpen, controls]);
 
   const dropdownVariants = {
-    open: { 
-      opacity: 1, 
+    open: {
+      opacity: 1,
       y: 0,
-      transition: { 
-        type: "spring" as const, 
-        stiffness: 300, 
-        damping: 30 
+      scale: 1,
+      transition: {
+        type: "spring" as const,
+        stiffness: 320,
+        damping: 32
       }
     },
-    closed: { 
-      opacity: 0, 
-      y: -10,
-      transition: { 
-        duration: 0.2 
+    closed: {
+      opacity: 0,
+      y: -14,
+      scale: 0.98,
+      transition: {
+        duration: 0.17
       }
     }
   };
 
   return (
     <div className="relative">
-      <motion.button 
+      <motion.button
         className="flex items-center gap-2 focus:outline-none"
         onClick={toggle}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.97 }}
         aria-expanded={isOpen}
         aria-label="User profile menu"
+        transition={fadeSpring}
       >
-        <UserProfileAvatar 
-          imageUrl={userData?.image} 
+        <UserProfileAvatar
+          imageUrl={userData?.image}
           name={userData?.name}
           size={loading ? "md" : "md"}
         />
-        <div className="hidden md:flex flex-col items-start">
+        <motion.div
+          className="hidden md:flex flex-col items-start"
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={fadeSpring}
+        >
           {loading ? (
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-gray-300 border-t-[#28809A] rounded-full animate-spin"></div>
-              <span className="text-xs text-gray-500">Loading...</span>
-            </div>
+            <motion.div
+              className="flex items-center gap-2"
+              initial={{ opacity: 0.4 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="w-3.5 h-3.5 border border-[#e7e7e8] border-t-[#1d9bf0] rounded-full animate-spin"></div>
+              <span className="text-[0.7rem] text-[#536471]">Loading...</span>
+            </motion.div>
           ) : (
             <>
-              <p className="text-xs font-medium text-gray-600 truncate max-w-[120px]">
+              <motion.p
+                className="text-[0.7rem] font-medium text-[#536471] truncate max-w-[108px]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.28 }}
+              >
                 {userData?.role || "Guest"}
-              </p>
-              <p className="text-sm font-semibold text-gray-900 truncate max-w-[120px]">
+              </motion.p>
+              <motion.p
+                className="text-sm font-semibold text-[#0f1419] truncate max-w-[108px]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.35 }}
+              >
                 {userData?.name || "Welcome"}
-              </p>
+              </motion.p>
             </>
           )}
-        </div>
-        <motion.div animate={{ rotate: isOpen ? 180 : 0 }}>
-          <IoIosArrowDown size={16} className="text-gray-500 transition-colors" />
+        </motion.div>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={fadeSpring}
+        >
+          <IoIosArrowDown size={14} className="text-[#536471] transition-colors" />
         </motion.div>
       </motion.button>
 
@@ -171,41 +224,80 @@ const UserProfileDropdown = memo(function UserProfileDropdown({
             initial="closed"
             animate="open"
             exit="closed"
-            className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl py-1 z-50 border border-gray-200"
+            className="absolute right-0 mt-2 w-50 bg-white rounded-lg shadow-xl py-1 z-50 border border-[#e7e7e8]"
           >
-            <div className="px-4 py-3 border-b border-gray-100">
-              <p className="text-sm font-medium text-gray-900 truncate">
+            <motion.div
+              className="px-3 py-2 border-b border-[#f7f9f9]"
+              initial={{ opacity: 0, y: -7 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={fadeSpring}
+            >
+              <p className="text-sm font-medium text-[#0f1419] truncate">
                 {userData?.name || "User"}
               </p>
-              <p className="text-xs text-gray-500 truncate">
+              <p className="text-[0.7rem] text-[#536471] truncate">
                 {userData?.email || "No email"}
               </p>
-            </div>
-            {[
-              { href: "/dashboard/my-profile", text: "Your Profile", icon: "👤" },
-              { href: "/settings", text: "Settings", icon: "⚙️" },
-              { href: "/help", text: "Help & Support", icon: "❓" },
-            ].map((item) => (
+            </motion.div>
+
+            {/* Added Go to Home link */}
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0, type: "spring" as const, stiffness: 300, damping: 30 }}
+            >
               <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                href="/"
+                className="flex items-center px-3 py-2.5 text-sm text-[#0f1419] hover:bg-[#f7f9f9] transition-colors"
                 onClick={() => setIsOpen(false)}
               >
-                <span className="mr-2">{item.icon}</span>
-                {item.text}
+                <span className="mr-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                  </svg>
+                </span>
+                Go to Home
               </Link>
+            </motion.div>
+
+            {[
+              { href: "/dashboard/my-profile", text: "Your Profile", icon: <FiUser size={16} className="text-[#536471]" /> },
+              { href: "/settings", text: "Settings", icon: <FiSettings size={16} className="text-[#536471]" /> },
+              { href: "/help", text: "Help & Support", icon: <FiHelpCircle size={16} className="text-[#536471]" /> },
+            ].map((item, idx) => (
+              <motion.div
+                key={item.href}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.05 * (idx + 1), type: "spring" as const, stiffness: 300, damping: 30 }}
+              >
+                <Link
+                  href={item.href}
+                  className="flex items-center px-3 py-2.5 text-sm text-[#0f1419] hover:bg-[#f7f9f9] transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <span className="mr-2">{item.icon}</span>
+                  {item.text}
+                </Link>
+              </motion.div>
             ))}
-            <button
-              onClick={() => {
-                onSignOut();
-                setIsOpen(false);
-              }}
-              className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-t border-gray-100 mt-1"
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.15, type: "spring" as const, stiffness: 300, damping: 30 }}
             >
-              <span className="mr-2">👋</span>
-              Sign out
-            </button>
+              <button
+                onClick={() => {
+                  onSignOut();
+                  setIsOpen(false);
+                }}
+                className="w-full text-left flex items-center px-3 py-2.5 text-sm text-[#0f1419] hover:bg-[#f7f9f9] border-t border-[#f7f9f9] mt-1"
+              >
+                <FiLogOut size={16} className="text-[#536471] mr-2" />
+                Sign out
+              </button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -264,80 +356,101 @@ const DashboardTopBar = memo(function DashboardTopBar() {
   };
 
   const navItemVariants = {
-    hover: { y: -2 },
+    hover: { y: -2, scale: 1.03 },
     tap: { y: 0 }
   };
 
   const mobileMenuVariants = {
-    open: { x: 0 },
-    closed: { x: "-100%" }
+    open: {
+      x: 0,
+      opacity: 1,
+      transition: {
+        type: "spring" as const,
+        stiffness: 300,
+        damping: 30
+      }
+    },
+    closed: {
+      x: "-100%",
+      opacity: 0,
+      transition: { duration: 0.25 }
+    }
   };
 
   return (
-    <header className="fixed z-30 top-0 left-0 w-full flex justify-between items-center h-16 md:h-20 px-4 md:px-8 bg-white shadow-sm border-b border-gray-100">
-      <div className="flex items-center gap-4">
-        <motion.button 
-          className="md:hidden text-gray-600 focus:outline-none"
+    <header className="fixed z-30 top-0 left-0 w-full flex justify-between items-center h-[58px] md:h-[72px] px-3 md:px-7 bg-white shadow-sm border-b border-[#e7e7e8]">
+      <div className="flex items-center gap-3">
+        <motion.button
+          className="md:hidden text-[#536471] focus:outline-none"
           onClick={toggleMobileMenu}
           animate={controls}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.13, rotate: 8 }}
+          whileTap={{ scale: 0.92 }}
           aria-label="Toggle menu"
+          transition={fadeSpring}
         >
-          {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+          {mobileMenuOpen ? <FiX size={22} /> : <FiMenu size={22} />}
         </motion.button>
-        
+
         <Link href="/dashboard" passHref>
           <motion.div
             variants={logoVariants}
             whileHover="hover"
             whileTap="tap"
-            className="flex items-center gap-2 cursor-pointer"
+            className="flex items-center gap-1 cursor-pointer"
           >
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="w-8 h-8 md:w-10 md:h-10 bg-blue-50 rounded-full flex items-center justify-center"
+              className="w-7 h-7 md:w-9 md:h-9 bg-[#e8f5fd] rounded-full flex items-center justify-center"
+              whileHover={{ scale: 1.07, rotate: -6 }}
             >
-              <GiSoccerBall className="text-xl md:text-2xl text-[#28809A]" />
+              <GiSoccerBall className="text-xl md:text-xl text-[#1d9bf0]" />
             </motion.div>
-            <h1 className="font-bold text-lg md:text-xl text-gray-900 tracking-tight">
+            <motion.h1
+              className="font-bold text-lg md:text-xl text-dark tracking-tight"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={fadeSpring}
+            >
               SPORTS ANALYTICS
-            </h1>
+            </motion.h1>
           </motion.div>
         </Link>
       </div>
 
       <nav className="hidden md:flex">
         <ul className="flex items-center gap-1">
-          {navTabs.map((tab) => (
-            <motion.li 
-              key={tab.route} 
+          {navTabs.map((tab, idx) => (
+            <motion.li
+              key={tab.route}
               className="relative"
               variants={navItemVariants}
-              whileHover="hover"
               whileTap="tap"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.03 * idx, ...fadeSpring }}
             >
               <Link
                 href={tab.route}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-2 px-2 py-2 rounded-lg transition-colors ${
                   isActiveRoute(tab.route)
-                    ? "text-[#28809A] bg-blue-50 font-semibold"
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "text-[#1d9bf0] bg-[#e8f5fd] font-semibold"
+                    : "text-[#536471] hover:bg-[#f7f9f9]"
                 }`}
                 passHref
               >
-                <motion.div whileTap={{ scale: 0.9 }}>
+                <motion.div whileTap={{ scale: 0.95 }}>
                   {tab.icon({
-                    color: isActiveRoute(tab.route) ? "#28809A" : "currentColor"
+                    color: isActiveRoute(tab.route) ? "#1d9bf0" : "currentColor"
                   })}
                 </motion.div>
                 <span className="text-sm">{tab.name}</span>
               </Link>
               {isActiveRoute(tab.route) && (
-                <motion.div 
+                <motion.div
                   layoutId="navIndicator"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#28809A]"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1d9bf0]"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
@@ -346,20 +459,21 @@ const DashboardTopBar = memo(function DashboardTopBar() {
         </ul>
       </nav>
 
-      <div className="flex items-center gap-4">
-        <motion.button 
-          className="p-2 rounded-full hover:bg-gray-100 focus:outline-none"
+      <div className="flex items-center gap-3">
+        <motion.button
+          className="p-2 rounded-full hover:bg-[#f7f9f9] focus:outline-none"
           whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          whileTap={{ scale: 0.93 }}
           aria-label="Notifications"
+          transition={fadeSpring}
         >
           <NotificationIcon />
         </motion.button>
-        
-        <UserProfileDropdown 
-          userData={userData} 
-          loading={loading} 
-          onSignOut={handleSignOut} 
+
+        <UserProfileDropdown
+          userData={userData}
+          loading={loading}
+          onSignOut={handleSignOut}
         />
       </div>
 
@@ -372,70 +486,74 @@ const DashboardTopBar = memo(function DashboardTopBar() {
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black z-10 md:hidden"
               onClick={() => setMobileMenuOpen(false)}
+              transition={fadeSpring}
             />
             <motion.div
               variants={mobileMenuVariants}
               initial="closed"
               animate="open"
               exit="closed"
-              className="fixed inset-y-0 left-0 w-64 z-20 bg-white shadow-xl md:hidden"
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed inset-y-0 left-0 w-56 z-20 bg-white shadow-xl md:hidden"
             >
-              <div className="p-4 border-b border-gray-200 h-16 flex items-center">
-                <UserProfileAvatar 
-                  imageUrl={userData?.image} 
+              <motion.div
+                className="p-3 border-b border-[#e7e7e8] h-[58px] flex items-center"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={fadeSpring}
+              >
+                <UserProfileAvatar
+                  imageUrl={userData?.image}
                   name={userData?.name}
                   size="lg"
                 />
-                <div className="ml-3">
-                  <p className="font-semibold text-gray-900 truncate max-w-[160px]">
+                <motion.div
+                  className="ml-2"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={fadeSpring}
+                >
+                  <p className="font-semibold text-sm text-[#0f1419] truncate max-w-[144px]">
                     {userData?.name || "User"}
                   </p>
-                  <p className="text-xs text-gray-500 truncate max-w-[160px]">
+                  <p className="text-[0.7rem] text-[#536471] truncate max-w-[144px]">
                     {userData?.role || "Guest"}
                   </p>
-                </div>
-              </div>
-              <ul className="py-2 overflow-y-auto h-[calc(100%-4rem)]">
-                {navTabs.map((tab, index) => (
+                </motion.div>
+              </motion.div>
+              <ul className="py-2 overflow-y-auto h-[calc(100%-3rem)]">
+                {navTabs.map((tab, idx) => (
                   <motion.li
                     key={tab.route}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ 
-                      opacity: 1, 
-                      x: 0,
-                      transition: { delay: 0.1 + index * 0.05 }
-                    }}
+                    initial={{ opacity: 0, x: -22 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 * idx, ...fadeSpring }}
                   >
                     <Link
                       href={tab.route}
-                      className={`flex items-center gap-3 px-4 py-3 ${
+                      className={`flex items-center gap-2 px-3 py-2 ${
                         isActiveRoute(tab.route)
-                          ? "bg-blue-50 text-[#28809A]"
-                          : "text-gray-700 hover:bg-gray-50"
+                          ? "bg-[#e8f5fd] text-[#1d9bf0]"
+                          : "text-[#0f1419] hover:bg-[#f7f9f9]"
                       }`}
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       {tab.icon({
-                        color: isActiveRoute(tab.route) ? "#28809A" : "currentColor",
+                        color: isActiveRoute(tab.route) ? "#1d9bf0" : "currentColor"
                       })}
-                      <span>{tab.name}</span>
+                      <span className="text-sm">{tab.name}</span>
                     </Link>
                   </motion.li>
                 ))}
                 <motion.li
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ 
-                    opacity: 1, 
-                    x: 0,
-                    transition: { delay: 0.1 + navTabs.length * 0.05 }
-                  }}
+                  initial={{ opacity: 0, x: -22 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.18, ...fadeSpring }}
                 >
                   <button
                     onClick={handleSignOut}
-                    className="flex items-center gap-3 px-4 py-3 w-full text-left text-gray-700 hover:bg-gray-50 border-t border-gray-100 mt-2"
+                    className="flex items-center gap-2 px-3 py-2 w-full text-left text-sm text-[#0f1419] hover:bg-[#f7f9f9] border-t border-[#e7e7e8] mt-2"
                   >
-                    <FiX className="text-gray-500" />
+                    <FiLogOut size={16} className="text-[#536471]" />
                     <span>Sign out</span>
                   </button>
                 </motion.li>
