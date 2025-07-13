@@ -114,11 +114,16 @@ const PlayerProfile = () => {
   const fetchPlayers = useCallback(async (
     tId: number,
     cId: number,
-    offsetValue = offset,
-    limitValue = limit,
+    offsetValue: number,
+    limitValue: number,
     replace = false
   ) => {
-    setLoading(prev => ({ ...prev, more: true }));
+    if (!replace && offsetValue === 0) {
+      setLoading(prev => ({ ...prev, more: true }));
+    } else if (!replace) {
+      setLoading(prev => ({ ...prev, more: true }));
+    }
+    
     try {
       const response = await axios.get<ApiResponse>(
         `${baseUrl}/team_players/team/${tId}/coach/${cId}?limit=${limitValue}&offset=${offsetValue}`
@@ -136,14 +141,16 @@ const PlayerProfile = () => {
           replace ? playersWithStatus : [...prev, ...playersWithStatus]
         );
         setHasMore(playersWithStatus.length === limitValue);
-        setOffset(offsetValue + limitValue);
+        if (!replace) {
+          setOffset(offsetValue + limitValue);
+        }
       }
     } catch (error) {
       handleFetchError(error, "players");
     } finally {
       setLoading(prev => ({ ...prev, more: false }));
     }
-  }, [offset, limit]); // Add dependencies
+  }, []); // Remove dependencies to prevent unnecessary re-renders
 
   // Main data fetching logic
   const fetchData = useCallback(async () => {
@@ -177,7 +184,7 @@ const PlayerProfile = () => {
     } finally {
       setLoading(prev => ({ ...prev, fetch: false, teamFetch: false, initial: false }));
     }
-  }, [limit, fetchPlayers]); // Add fetchPlayers dependency
+  }, [limit]); // Remove fetchPlayers dependency
 
   // Error handling utility
   const handleFetchError = (error: unknown, context = "data") => {
@@ -220,17 +227,18 @@ const PlayerProfile = () => {
       const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
       if (scrollHeight - scrollTop - clientHeight < 120) {
         // Show skeleton immediately on scroll event
-        setLoading(prev => ({ ...prev, more: true }));
         fetchPlayers(teamId, coachId, offset, limit);
       }
     };
 
     const div = containerRef.current;
-    if (div) div.addEventListener("scroll", handleScroll);
+    if (div && teamId && coachId) {
+      div.addEventListener("scroll", handleScroll);
+    }
     return () => {
       if (div) div.removeEventListener("scroll", handleScroll);
     };
-  }, [loading.more, hasMore, offset, limit, teamId, coachId, loading.fetch, fetchPlayers]); // Add fetchPlayers dependency
+  }, [loading.more, hasMore, offset, limit, teamId, coachId, loading.fetch]); // Remove fetchPlayers dependency
 
   // Form handling
   const handleInvitePlayer = async (e: React.FormEvent) => {
@@ -259,6 +267,7 @@ const PlayerProfile = () => {
       if (response.data.success) {
         toast.success("Player invited successfully!");
         setOffset(0);
+        setHasMore(true);
         await fetchPlayers(teamId, coachId, 0, limit, true);
         setFormData({ player_name: "", player_email: "", position: "" });
         setShowModal(false);
@@ -527,9 +536,11 @@ const PlayerProfile = () => {
                 overall_performance: selectedPlayer.overall_performance || 0,
               }}
               onClose={() => setSelectedPlayer(null)}
-              onPlayerDeleted={() =>
-                fetchPlayers(teamId, coachId, 0, limit, true)
-              }
+              onPlayerDeleted={() => {
+                setOffset(0);
+                setHasMore(true);
+                fetchPlayers(teamId, coachId, 0, limit, true);
+              }}
             />
           )}
         </AnimatePresence>
