@@ -4,6 +4,7 @@ import FormField from "@/components/FormField";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import { signInFields } from "@/constants/authFields";
 import { baseUrl } from "@/constants/baseUrl";
+import { useDataPreload } from "@/contexts/DataPreloadContext";
 import axios from "axios";
 import Link from "next/link";
 import Image from "next/image";
@@ -26,6 +27,7 @@ interface FocusedValues {
 
 const SignIn = () => {
   const router = useRouter();
+  const { preloadDashboardData, isPreloading } = useDataPreload();
   const [formValues, setFormValues] = useState<FormValues>({
     email: "",
     password: "",
@@ -89,10 +91,22 @@ const SignIn = () => {
           path: "/",
         });
 
-        setRedirecting(true);
+        // Extract user ID from response and set cookie
+        const userId = res.data.user?.id || res.data.user_id;
+        if (userId) {
+          Cookies.set("x-user-id", userId.toString(), {
+            expires: rememberMe ? 7 : 3,
+            path: "/",
+          });
+          
+          // Preload dashboard data
+          setRedirecting(true);
+          await preloadDashboardData(userId);
+        }
+
         setTimeout(() => {
           router.push("/dashboard");
-        }, 1000);
+        }, 500);
       } else {
         setErrorMessage(res.data.detail || "Something went wrong!");
       }
@@ -214,9 +228,18 @@ const SignIn = () => {
   return (
     <div className="relative w-full flex flex-row-reverse bg-white h-screen justify-center gap-8">
       {/* Full-page loading overlay */}
-      {redirecting && (
+      {(redirecting || isPreloading) && (
         <div className="fixed inset-0 z-50 backdrop-blur-sm bg-opacity-90 flex items-center justify-center">
-          <LoadingAnimation  />
+          <div className="text-center">
+            <LoadingAnimation />
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-4 text-gray-600 font-medium"
+            >
+              {isPreloading ? "Preparing your dashboard..." : "Redirecting..."}
+            </motion.p>
+          </div>
         </div>
       )}
 

@@ -10,6 +10,7 @@ import Cookies from "js-cookie";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { baseUrl } from "@/constants/baseUrl";
+import { useDataPreload } from "@/contexts/DataPreloadContext";
 
 import PlayerCard from "@/components/player-profile-comp/PlayerCard";
 import PlayerModal from "@/components/player-profile-comp/PlayerModal";
@@ -60,6 +61,7 @@ function getLimitForScreen() {
 }
 
 const PlayerProfile = () => {
+  const { preloadedData } = useDataPreload();
   const [players, setPlayers] = useState<Player[]>([]);
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -163,28 +165,53 @@ const PlayerProfile = () => {
       }
       setCoachId(cId);
 
-      const teamResponse = await axios.get<{
-        success: boolean;
-        teams: Team[];
-      }>(`${baseUrl}/team_management/get_coach_teams?coach_id=${cId}`);
+      // Check if we have preloaded team data
+      if (preloadedData.teamData && preloadedData.teamData.length > 0) {
+        const tId = preloadedData.teamData[0].id;
+        setTeamId(tId);
 
-      if (!teamResponse.data.success || !teamResponse.data.teams.length) {
-        throw new Error("No teams found for this coach");
+        // Use preloaded players data if available
+        if (preloadedData.playersData && preloadedData.playersData.length > 0) {
+          const playersWithStatus = preloadedData.playersData.map((player) => ({
+            ...player,
+            ...DEFAULT_PLAYER_VALUES,
+            status: player.status || DEFAULT_PLAYER_VALUES.status,
+            overall_performance: player.overall_performance || DEFAULT_PLAYER_VALUES.overall_performance,
+          }));
+          setPlayers(playersWithStatus);
+          setOffset(playersWithStatus.length);
+          setHasMore(playersWithStatus.length === limit);
+        } else {
+          setOffset(0);
+          setPlayers([]);
+          setHasMore(true);
+          await fetchPlayers(tId, cId, 0, limit, true);
+        }
+      } else {
+        // Fallback to fetching team data
+        const teamResponse = await axios.get<{
+          success: boolean;
+          teams: Team[];
+        }>(`${baseUrl}/team_management/get_coach_teams?coach_id=${cId}`);
+
+        if (!teamResponse.data.success || !teamResponse.data.teams.length) {
+          throw new Error("No teams found for this coach");
+        }
+
+        const tId = teamResponse.data.teams[0].id;
+        setTeamId(tId);
+
+        setOffset(0);
+        setPlayers([]);
+        setHasMore(true);
+        await fetchPlayers(tId, cId, 0, limit, true);
       }
-
-      const tId = teamResponse.data.teams[0].id;
-      setTeamId(tId);
-
-      setOffset(0);
-      setPlayers([]);
-      setHasMore(true);
-      await fetchPlayers(tId, cId, 0, limit, true);
     } catch (error) {
       handleFetchError(error);
     } finally {
       setLoading(prev => ({ ...prev, fetch: false, teamFetch: false, initial: false }));
     }
-  }, [limit]); // Remove fetchPlayers dependency
+  }, [limit, preloadedData]); // Add preloadedData dependency
 
   // Error handling utility
   const handleFetchError = (error: unknown, context = "data") => {

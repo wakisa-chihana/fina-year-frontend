@@ -12,6 +12,7 @@ import { IoIosArrowDown } from "react-icons/io";
 import { RiNotification3Line } from "react-icons/ri";
 import { navTabs } from "@/constants/navTabs";
 import { baseUrl } from "@/constants/baseUrl";
+import { useDataPreload } from "@/contexts/DataPreloadContext";
 
 const sizeClasses = {
   sm: "w-7 h-7",
@@ -312,12 +313,14 @@ const DashboardTopBar = memo(function DashboardTopBar() {
   const controls = useAnimation();
   const currentRoute = usePathname();
   const router = useRouter();
+  const { getPreloadedUserData, clearPreloadedData } = useDataPreload();
 
   const handleSignOut = useCallback(() => {
     Cookie.remove('sport_analytics');
     Cookie.remove('x-user-id');
+    clearPreloadedData(); // Clear preloaded data on sign out
     router.push('/');
-  }, [router]);
+  }, [router, clearPreloadedData]);
 
   const isActiveRoute = useCallback((route: string) => {
     if (route === '/dashboard/player-profile') {
@@ -327,6 +330,15 @@ const DashboardTopBar = memo(function DashboardTopBar() {
   }, [currentRoute]);
 
   useEffect(() => {
+    // First check if we have preloaded data
+    const preloadedUser = getPreloadedUserData();
+    if (preloadedUser) {
+      setUserData(preloadedUser);
+      setLoading(false);
+      return;
+    }
+
+    // Fallback to fetching if no preloaded data
     const user_id = Cookie.get("x-user-id");
     if (user_id && !userData) {
       setLoading(true);
@@ -343,7 +355,7 @@ const DashboardTopBar = memo(function DashboardTopBar() {
     } else {
       setLoading(false);
     }
-  }, [userData]);
+  }, [userData, getPreloadedUserData]);
 
   const toggleMobileMenu = useCallback(() => {
     setMobileMenuOpen(o => !o);
