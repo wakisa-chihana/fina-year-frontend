@@ -1,9 +1,10 @@
-import { FaUserAlt, FaRegClock, FaCheck, FaTimes, FaRunning, FaFutbol, FaStar } from "react-icons/fa";
+import { FaUserAlt, FaRegClock, FaCheck, FaTimes, FaRunning, FaFutbol, FaStar, FaArrowRight, FaSpinner } from "react-icons/fa";
 import { GiSoccerBall, GiSoccerKick, GiGoalKeeper } from "react-icons/gi";
 import { IoShirtOutline, IoMailOutline, IoFootsteps } from "react-icons/io5";
 import { MdOutlineSportsScore } from "react-icons/md";
 import { motion, useMotionTemplate, useMotionValue, animate } from "framer-motion";
-import { JSX, useEffect } from "react";
+import { JSX, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface PlayerCardProps {
   player: {
@@ -71,10 +72,26 @@ const StatusBadge = ({ status }: { status: string }) => {
 };
 
 const PlayerCard = ({ player, onClick, index }: PlayerCardProps) => {
+  const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
   const positionData = positionThemes[player.position as keyof typeof positionThemes] || positionThemes['default'];
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const performancePercentage = player.overall_performance || 0;
+
+  const handleViewProfile = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click from firing
+    setIsNavigating(true);
+    
+    try {
+      // Small delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 300));
+      router.push(`/dashboard/player-profile/${player.id}`);
+    } catch (error) {
+      console.error('Navigation error:', error);
+      setIsNavigating(false);
+    }
+  };
 
   const getPerformanceTheme = (percentage: number) => {
     if (percentage >= 85) return {
@@ -132,7 +149,7 @@ const PlayerCard = ({ player, onClick, index }: PlayerCardProps) => {
         transition: { type: "spring", stiffness: 300 }
       }}
       onMouseMove={handleMouseMove}
-      className="relative p-4 bg-white rounded-xl border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden group isolate"
+      className="relative p-3 md:p-4 bg-white rounded-xl border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden group isolate"
       onClick={onClick}
       style={{
         boxShadow: useMotionTemplate`
@@ -152,14 +169,14 @@ const PlayerCard = ({ player, onClick, index }: PlayerCardProps) => {
 
       <div className={`absolute top-0 left-0 w-1.5 h-full ${positionData.gradient} bg-gradient-to-b`}></div>
 
-      <div className="flex items-start justify-between mb-3 relative z-10">
+      <div className="flex items-start justify-between mb-2 md:mb-3 relative z-10">
         <motion.div 
           className="relative"
           whileHover={{ y: -1 }}
         >
           <div className={`absolute -inset-0.5 rounded-full ${positionData.gradient} bg-gradient-to-r opacity-75 group-hover:opacity-100 transition-all duration-300 blur-sm group-hover:blur`}></div>
-          <div className={`relative p-2 ${positionData.bg} rounded-full flex items-center justify-center backdrop-blur-sm`}>
-            <div className={`text-lg ${positionData.text}`}>
+          <div className={`relative p-1.5 md:p-2 ${positionData.bg} rounded-full flex items-center justify-center backdrop-blur-sm`}>
+            <div className={`text-base md:text-lg ${positionData.text}`}>
               {positionData.icon}
             </div>
           </div>
@@ -176,14 +193,14 @@ const PlayerCard = ({ player, onClick, index }: PlayerCardProps) => {
 
       <div className="relative z-10">
         <motion.h2 
-          className="text-base font-bold text-gray-900 mb-2 tracking-tight"
+          className="text-sm md:text-base font-bold text-gray-900 mb-1.5 md:mb-2 tracking-tight"
           whileHover={{ color: "#28809A", x: 1 }}
           transition={{ duration: 0.2 }}
         >
           {player.name}
         </motion.h2>
 
-        <div className="inline-block mb-3">
+        <div className="inline-block mb-2 md:mb-3">
           <motion.span 
             className={`text-xs font-semibold px-1.5 py-0.5 rounded-md ${positionData.bg} ${positionData.text}`}
             whileHover={{ scale: 1.03 }}
@@ -192,26 +209,28 @@ const PlayerCard = ({ player, onClick, index }: PlayerCardProps) => {
           </motion.span>
         </div>
 
-        <div className="flex items-center gap-1 text-xs text-gray-600 my-3">
-          <IoMailOutline size={14} className="flex-shrink-0 opacity-80" />
-          <span className="truncate font-medium">{player.email}</span>
+        <div className="flex items-center gap-1 text-xs text-gray-600 my-2 md:my-3">
+          <IoMailOutline size={12} className="flex-shrink-0 opacity-80 md:hidden" />
+          <IoMailOutline size={14} className="flex-shrink-0 opacity-80 hidden md:block" />
+          <span className="truncate font-medium text-xs md:text-sm">{player.email}</span>
         </div>
 
-        <div className="mb-4">
+        <div className="mb-3 md:mb-4">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1">
               <motion.div
                 animate={{ rotate: [0, 15, -10, 5, 0], scale: [1, 1.2, 1] }}
                 transition={{ delay: 0.5, duration: 0.6, ease: "easeInOut" }}
               >
-                <FaStar size={14} className={`${performanceTheme.text}`} />
+                <FaStar size={12} className={`md:hidden ${performanceTheme.text}`} />
+                <FaStar size={14} className={`hidden md:block ${performanceTheme.text}`} />
               </motion.div>
               <span className={`text-xs font-semibold ${performanceTheme.text}`}>
                 Performance
               </span>
             </div>
             <motion.span 
-              className={`text-sm font-bold ${performanceTheme.text}`}
+              className={`text-xs md:text-sm font-bold ${performanceTheme.text}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -230,14 +249,53 @@ const PlayerCard = ({ player, onClick, index }: PlayerCardProps) => {
               />
             </div>
 
-            <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+            <div className="flex justify-between text-[9px] md:text-[10px] text-gray-500 mt-1">
               {[0, 25, 50, 75, 100].map((mark) => (
                 <span key={mark}>{mark}%</span>
               ))}
             </div>
           </div>
         </div>
+
+        {/* View Full button */}
+        <motion.button
+          onClick={handleViewProfile}
+          disabled={isNavigating}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          whileHover={{ scale: 1.02, backgroundColor: "rgba(40, 128, 154, 0.05)" }}
+          whileTap={{ scale: 0.98 }}
+          className={`w-full flex items-center justify-center gap-2 pt-2 md:pt-3 mt-2 md:mt-3 border-t border-gray-100 transition-all duration-200 rounded-b-xl ${
+            isNavigating 
+              ? 'cursor-not-allowed opacity-60' 
+              : 'cursor-pointer hover:bg-gray-50'
+          }`}
+        >
+          {isNavigating ? (
+            <>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              >
+                <FaSpinner className="text-[#28809A] text-xs" />
+              </motion.div>
+              <span className="text-xs text-[#28809A] font-medium">Loading...</span>
+            </>
+          ) : (
+            <>
+              <span className="text-xs text-gray-600 font-medium">View Full</span>
+              <motion.div
+                whileHover={{ x: 2 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                <FaArrowRight className="text-gray-600 text-xs" />
+              </motion.div>
+            </>
+          )}
+        </motion.button>
       </div>
+
     </motion.div>
   );
 };

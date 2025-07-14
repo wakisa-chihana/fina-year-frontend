@@ -4,7 +4,7 @@ import {
   FaHandsHelping, FaChartLine, FaTimes, FaBirthdayCake, 
   FaRulerVertical, FaWeight, FaShoePrints, FaCrosshairs,
   FaBrain, FaShieldAlt, FaBolt, FaFistRaised,
-  FaExclamationTriangle
+  FaExclamationTriangle, FaExpandArrowsAlt, FaInfoCircle
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { Radar, Bar, PolarArea } from 'react-chartjs-2';
@@ -728,6 +728,13 @@ if (error) {
                   <div className="px-3 py-1 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-xs font-bold rounded-full shadow-md flex items-center">
                     <FaTrophy className="mr-1" />
                     TOP PLAYER
+                  </div>
+                </div>
+
+                {/* Expand icon - shows full attributes hint */}
+                <div className="absolute bottom-3 right-3">
+                  <div className="p-2 bg-white bg-opacity-90 rounded-full shadow-md border border-gray-200 hover:bg-opacity-100 transition-all duration-200">
+                    <FaExpandArrowsAlt className="text-gray-600 text-sm" />
                   </div>
                 </div>
               </>

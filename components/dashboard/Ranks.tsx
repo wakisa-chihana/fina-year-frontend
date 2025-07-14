@@ -4,7 +4,8 @@ import {
   FaArrowRight, FaUserAlt, FaTrophy, FaStar, FaFutbol, 
   FaRunning, FaHandsHelping, FaChartLine, FaTimes, 
   FaBirthdayCake, FaRulerVertical, FaWeight, FaShoePrints, 
-  FaCrosshairs, FaBrain, FaShieldAlt, FaBolt, FaFistRaised 
+  FaCrosshairs, FaBrain, FaShieldAlt, FaBolt, FaFistRaised,
+  FaExpandArrowsAlt, FaInfoCircle
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { Radar, Bar, PolarArea } from 'react-chartjs-2';
@@ -269,6 +270,9 @@ const Ranks = () => {
                   <div className="flex items-center">
                     <FaStar className="text-yellow-400 mr-1" />
                     <span className="text-xs font-bold">{player.skill_moves}</span>
+                    <div className="ml-2 p-1 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors duration-200">
+                      <FaExpandArrowsAlt className="text-gray-600 text-xs" />
+                    </div>
                   </div>
                 </div>
               </div>

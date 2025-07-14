@@ -13,6 +13,7 @@ interface PlayerStats {
     "Goalkeepers": number;
     "Defenders": number;
     "Midfielders": number;
+    "Forwards": number;
   };
 }
 
@@ -88,11 +89,11 @@ const Players: React.FC<PlayersProps> = ({ coachId: propCoachId, initialData }) 
 
   if (loading) return (
     <div className="w-full md:w-1/4 grid bg-white gap-4 grid-cols-2 min-h-[25vh] p-2">
-      {[...Array(4)].map((_, i) => (
+      {[...Array(5)].map((_, i) => (
         <div 
           key={i} 
           className="h-full rounded-xl bg-gray-200 animate-pulse p-4 transition-opacity duration-300 ease-in-out"
-          style={{ gridColumn: i === 3 ? 'span 2' : '' }}
+          style={{ gridColumn: i === 0 ? 'span 2' : '' }}
         >
           <div className="h-6 w-3/4 bg-gray-300 rounded mx-auto mb-2 animate-pulse"></div>
           <div className="h-4 w-1/2 bg-gray-300 rounded mx-auto animate-pulse"></div>
@@ -118,6 +119,7 @@ const Players: React.FC<PlayersProps> = ({ coachId: propCoachId, initialData }) 
     { title: "Goalkeepers", value: stats.stats["Goalkeepers"], color: "bg-green-50 text-green-600" },
     { title: "Defenders", value: stats.stats["Defenders"], color: "bg-purple-50 text-purple-600" },
     { title: "Midfielders", value: stats.stats["Midfielders"], color: "bg-yellow-50 text-yellow-600" },
+    { title: "Forwards", value: stats.stats["Forwards"], color: "bg-red-50 text-red-600" },
   ];
 
   return (
@@ -132,7 +134,7 @@ const Players: React.FC<PlayersProps> = ({ coachId: propCoachId, initialData }) 
             hover:scale-105 hover:shadow-dark_blue
             transform-gpu will-change-transform
             animate-enter-stat shadow-lg shadow-blue-200
-            ${index === 3 ? 'col-span-2' : ''}
+            ${index === 0 ? 'col-span-2' : ''}
           `}
           style={{ 
             animationDelay: `${index * 50}ms`,

@@ -1,2 +1,2 @@
-export const baseUrl = "https://sports-analytics-backend-q8fw.onrender.com";
+export const baseUrl = "https://sports-analytics-backend-q23a.onrender.com";
 

@@ -10,7 +10,7 @@ import Cookies from "js-cookie";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { baseUrl } from "@/constants/baseUrl";
-import { useDataPreload } from "@/contexts/DataPreloadContext";
+import notificationService from "@/services/notificationService";
 
 import PlayerCard from "@/components/player-profile-comp/PlayerCard";
 import PlayerModal from "@/components/player-profile-comp/PlayerModal";
@@ -61,7 +61,6 @@ function getLimitForScreen() {
 }
 
 const PlayerProfile = () => {
-  const { preloadedData } = useDataPreload();
   const [players, setPlayers] = useState<Player[]>([]);
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -165,53 +164,28 @@ const PlayerProfile = () => {
       }
       setCoachId(cId);
 
-      // Check if we have preloaded team data
-      if (preloadedData.teamData && preloadedData.teamData.length > 0) {
-        const tId = preloadedData.teamData[0].id;
-        setTeamId(tId);
+      const teamResponse = await axios.get<{
+        success: boolean;
+        teams: Team[];
+      }>(`${baseUrl}/team_management/get_coach_teams?coach_id=${cId}`);
 
-        // Use preloaded players data if available
-        if (preloadedData.playersData && preloadedData.playersData.length > 0) {
-          const playersWithStatus = preloadedData.playersData.map((player) => ({
-            ...player,
-            ...DEFAULT_PLAYER_VALUES,
-            status: player.status || DEFAULT_PLAYER_VALUES.status,
-            overall_performance: player.overall_performance || DEFAULT_PLAYER_VALUES.overall_performance,
-          }));
-          setPlayers(playersWithStatus);
-          setOffset(playersWithStatus.length);
-          setHasMore(playersWithStatus.length === limit);
-        } else {
-          setOffset(0);
-          setPlayers([]);
-          setHasMore(true);
-          await fetchPlayers(tId, cId, 0, limit, true);
-        }
-      } else {
-        // Fallback to fetching team data
-        const teamResponse = await axios.get<{
-          success: boolean;
-          teams: Team[];
-        }>(`${baseUrl}/team_management/get_coach_teams?coach_id=${cId}`);
-
-        if (!teamResponse.data.success || !teamResponse.data.teams.length) {
-          throw new Error("No teams found for this coach");
-        }
-
-        const tId = teamResponse.data.teams[0].id;
-        setTeamId(tId);
-
-        setOffset(0);
-        setPlayers([]);
-        setHasMore(true);
-        await fetchPlayers(tId, cId, 0, limit, true);
+      if (!teamResponse.data.success || !teamResponse.data.teams.length) {
+        throw new Error("No teams found for this coach");
       }
+
+      const tId = teamResponse.data.teams[0].id;
+      setTeamId(tId);
+
+      setOffset(0);
+      setPlayers([]);
+      setHasMore(true);
+      await fetchPlayers(tId, cId, 0, limit, true);
     } catch (error) {
       handleFetchError(error);
     } finally {
       setLoading(prev => ({ ...prev, fetch: false, teamFetch: false, initial: false }));
     }
-  }, [limit, preloadedData]); // Add preloadedData dependency
+  }, [limit, fetchPlayers]); // Add fetchPlayers dependency
 
   // Error handling utility
   const handleFetchError = (error: unknown, context = "data") => {
@@ -265,7 +239,7 @@ const PlayerProfile = () => {
     return () => {
       if (div) div.removeEventListener("scroll", handleScroll);
     };
-  }, [loading.more, hasMore, offset, limit, teamId, coachId, loading.fetch]); // Remove fetchPlayers dependency
+  }, [loading.more, hasMore, offset, limit, teamId, coachId, loading.fetch, fetchPlayers]); // Add fetchPlayers dependency
 
   // Form handling
   const handleInvitePlayer = async (e: React.FormEvent) => {
@@ -293,6 +267,17 @@ const PlayerProfile = () => {
 
       if (response.data.success) {
         toast.success("Player invited successfully!");
+        
+        // Send notification to coach about successful invitation
+        try {
+          await notificationService.sendNotification({
+            user_id: coachId,
+            message: `You have successfully invited ${formData.player_name} (${formData.player_email}) to join your team as a ${formData.position}.`
+          });
+        } catch (notifError) {
+          console.warn('Failed to send notification:', notifError);
+        }
+        
         setOffset(0);
         setHasMore(true);
         await fetchPlayers(teamId, coachId, 0, limit, true);
@@ -363,7 +348,7 @@ const PlayerProfile = () => {
 
   return (
     <div
-      className="w-full flex flex-col bg-gray-50 min-h-screen p-4 md:p-8 hide-scrollbar"
+      className="w-full flex flex-col bg-gray-50 min-h-screen p-3 md:p-8 hide-scrollbar"
       ref={containerRef}
       style={{
         height: "100vh",
@@ -378,47 +363,54 @@ const PlayerProfile = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4"
+          className="mb-6 md:mb-8"
         >
-          <div className="flex items-center gap-4">
-            <GiSoccerField className="text-4xl text-[#28809A]" />
-            <h1 className="text-xl md:text-xl font-extrabold text-gray-700 tracking-tight">
+          {/* Title Section */}
+          <div className="flex items-center gap-3 mb-4">
+            <GiSoccerField className="text-3xl md:text-4xl text-[#28809A]" />
+            <h1 className="text-lg md:text-xl font-extrabold text-gray-700 tracking-tight">
               Players
             </h1>
           </div>
 
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64">
+          {/* Search and Controls Section */}
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Search Bar */}
+            <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaSearch className="text-gray-400" />
+                <FaSearch className="text-gray-400 text-sm" />
               </div>
               <input
                 type="text"
                 placeholder="Search players..."
-                className="pl-10 pr-4 py-2 text-gray-700 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#28809A] focus:border-transparent"
+                className="pl-10 pr-4 py-2 md:py-2.5 text-gray-700 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#28809A] focus:border-transparent text-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <FaFilter />
-            </motion.button>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 md:p-2.5 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <FaFilter className="text-sm" />
+              </motion.button>
 
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 rounded-lg bg-dark text-white flex items-center gap-2 hover:bg-[#1e6a80] transition-colors"
-              onClick={() => setShowModal(true)}
-            >
-              <FaPlus />
-              <span className="hidden md:inline">Add Player</span>
-            </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-3 md:px-4 py-2 md:py-2.5 rounded-lg bg-dark text-white flex items-center gap-1.5 md:gap-2 hover:bg-[#1e6a80] transition-colors text-sm font-medium flex-shrink-0"
+                onClick={() => setShowModal(true)}
+              >
+                <FaPlus className="text-sm" />
+                <span className="hidden xs:inline sm:hidden md:inline">Add Player</span>
+                <span className="xs:hidden sm:inline md:hidden">Add</span>
+              </motion.button>
+            </div>
           </div>
         </motion.div>
 
@@ -429,16 +421,16 @@ const PlayerProfile = () => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="mb-6 overflow-hidden"
+              className="mb-4 md:mb-6 overflow-hidden"
             >
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="font-medium text-gray-700 mb-3">
+              <div className="bg-white p-3 md:p-4 rounded-lg shadow-sm border border-gray-200">
+                <h3 className="font-medium text-gray-700 mb-2 md:mb-3 text-sm md:text-base">
                   Filter by Position
                 </h3>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5 md:gap-2">
                   <button
                     onClick={() => setFilterPosition("all")}
-                    className={`px-3 py-1 rounded-full text-sm ${
+                    className={`px-2.5 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium ${
                       filterPosition === "all"
                         ? "bg-[#28809A] text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -450,7 +442,7 @@ const PlayerProfile = () => {
                     <button
                       key={pos}
                       onClick={() => setFilterPosition(pos)}
-                      className={`px-3 py-1 rounded-full text-sm capitalize ${
+                      className={`px-2.5 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium capitalize ${
                         filterPosition === pos
                           ? "bg-[#28809A] text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -467,7 +459,7 @@ const PlayerProfile = () => {
 
         {/* Players Grid */}
         {loading.initial ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <PlayerSkeleton count={getLimitForScreen()} />
           </div>
         ) : filteredPlayers.length === 0 ? (
@@ -475,19 +467,19 @@ const PlayerProfile = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
-            className="text-center py-16 border-2 border-gray-200 rounded-xl shadow-sm bg-white"
+            className="text-center py-12 md:py-16 border-2 border-gray-200 rounded-xl shadow-sm bg-white mx-1 md:mx-0"
           >
-            <GiSoccerKick className="mx-auto text-6xl text-gray-300 mb-4" />
-            <p className="text-xl text-gray-600 font-medium mb-2">
+            <GiSoccerKick className="mx-auto text-5xl md:text-6xl text-gray-300 mb-3 md:mb-4" />
+            <p className="text-lg md:text-xl text-gray-600 font-medium mb-2 px-4">
               No players found
             </p>
-            <p className="text-gray-500 mb-6">
+            <p className="text-gray-500 mb-4 md:mb-6 px-4 text-sm md:text-base">
               Try adjusting your search or filters
             </p>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-6 py-2 bg-[#28809A] text-white rounded-lg font-medium hover:bg-[#1e6a80] transition-colors flex items-center gap-2 mx-auto"
+              className="px-4 md:px-6 py-2 bg-[#28809A] text-white rounded-lg font-medium hover:bg-[#1e6a80] transition-colors flex items-center gap-2 mx-auto text-sm md:text-base"
               onClick={() => setShowModal(true)}
             >
               <FaCirclePlus />
@@ -495,7 +487,7 @@ const PlayerProfile = () => {
             </motion.button>
           </motion.div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <AnimatePresence>
               {filteredPlayers.map((player, index) => (
                 <motion.div
@@ -522,7 +514,7 @@ const PlayerProfile = () => {
               {/* Loading skeleton appears at the end while new players are loading */}
               {loading.more && <PlayerSkeleton count={Math.min(4, limit)} />}
               {!hasMore && (
-                <div className="col-span-full text-center py-4 text-gray-400">
+                <div className="col-span-full text-center py-3 md:py-4 text-gray-400 text-sm md:text-base">
                   No more players
                 </div>
               )}
@@ -573,6 +565,7 @@ const PlayerProfile = () => {
         </AnimatePresence>
 
         <Tooltip id="stats-tooltip" />
+        <Tooltip id="expand-tooltip" />
       </div>
     </div>
   );

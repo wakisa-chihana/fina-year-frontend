@@ -9,10 +9,9 @@ import Cookie from "js-cookie";
 import { GiSoccerBall } from "react-icons/gi";
 import { FiMenu, FiX, FiUser, FiSettings, FiHelpCircle, FiLogOut } from "react-icons/fi";
 import { IoIosArrowDown } from "react-icons/io";
-import { RiNotification3Line } from "react-icons/ri";
 import { navTabs } from "@/constants/navTabs";
 import { baseUrl } from "@/constants/baseUrl";
-import { useDataPreload } from "@/contexts/DataPreloadContext";
+import NotificationDropdown from '@/components/notifications/NotificationDropdown';
 
 const sizeClasses = {
   sm: "w-7 h-7",
@@ -27,44 +26,19 @@ const fadeSpring = {
 };
 
 const NotificationIcon = memo(function NotificationIcon() {
-  const [hasUnread, setHasUnread] = useState(true);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHasUnread(Math.random() > 0.5);
-    }, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: -6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={fadeSpring}
-      className="relative"
+      initial={{ opacity: 0, scale: 0.8, y: -10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{
+        type: "spring",
+        stiffness: 400,
+        damping: 20,
+        delay: 0.1
+      }}
+      className="relative flex items-center justify-center"
     >
-      <motion.div
-        whileHover={{ scale: 1.15, rotate: -10 }}
-        whileTap={{ scale: 0.95 }}
-        transition={{ type: "spring", stiffness: 200, damping: 20 }}
-      >
-        <RiNotification3Line size={18} className="text-[#536471] hover:text-[#0f1419] transition-colors" />
-      </motion.div>
-      {hasUnread && (
-        <motion.span
-          className="absolute top-0 right-0 w-[6.5px] h-[6.5px] bg-[#f4212e] rounded-full"
-          initial={{ scale: 0.5, opacity: 0.6 }}
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [1, 0.7, 1]
-          }}
-          transition={{
-            duration: 1.2,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-      )}
+      <NotificationDropdown />
     </motion.div>
   );
 });
@@ -313,14 +287,12 @@ const DashboardTopBar = memo(function DashboardTopBar() {
   const controls = useAnimation();
   const currentRoute = usePathname();
   const router = useRouter();
-  const { getPreloadedUserData, clearPreloadedData } = useDataPreload();
 
   const handleSignOut = useCallback(() => {
     Cookie.remove('sport_analytics');
     Cookie.remove('x-user-id');
-    clearPreloadedData(); // Clear preloaded data on sign out
     router.push('/');
-  }, [router, clearPreloadedData]);
+  }, [router]);
 
   const isActiveRoute = useCallback((route: string) => {
     if (route === '/dashboard/player-profile') {
@@ -330,15 +302,6 @@ const DashboardTopBar = memo(function DashboardTopBar() {
   }, [currentRoute]);
 
   useEffect(() => {
-    // First check if we have preloaded data
-    const preloadedUser = getPreloadedUserData();
-    if (preloadedUser) {
-      setUserData(preloadedUser);
-      setLoading(false);
-      return;
-    }
-
-    // Fallback to fetching if no preloaded data
     const user_id = Cookie.get("x-user-id");
     if (user_id && !userData) {
       setLoading(true);
@@ -355,7 +318,7 @@ const DashboardTopBar = memo(function DashboardTopBar() {
     } else {
       setLoading(false);
     }
-  }, [userData, getPreloadedUserData]);
+  }, [userData]);
 
   const toggleMobileMenu = useCallback(() => {
     setMobileMenuOpen(o => !o);
@@ -472,15 +435,7 @@ const DashboardTopBar = memo(function DashboardTopBar() {
       </nav>
 
       <div className="flex items-center gap-3">
-        <motion.button
-          className="p-2 rounded-full hover:bg-[#f7f9f9] focus:outline-none"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.93 }}
-          aria-label="Notifications"
-          transition={fadeSpring}
-        >
-          <NotificationIcon />
-        </motion.button>
+        <NotificationIcon />
 
         <UserProfileDropdown
           userData={userData}
