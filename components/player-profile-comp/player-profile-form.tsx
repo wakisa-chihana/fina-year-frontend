@@ -50,13 +50,15 @@ const skillIcons: Record<string, JSX.Element> = {
 };
 
 const workRateOptions = [
-  { value: '4.0', label: 'High / High' },
+  { value: '4', label: 'High / High' },
   { value: '3.5', label: 'High / Medium' },
-  { value: '3.0', label: 'High / Low' },
-  { value: '2.5', label: 'Medium / Medium' },
-  { value: '2.0', label: 'Medium / Low' },
-  { value: '1.5', label: 'Low / Medium' },
-  { value: '1.0', label: 'Low / Low' },
+  { value: '3', label: 'High / Low' },
+  { value: '3.5', label: 'Medium / High' },
+  { value: '3', label: 'Medium / Medium' },
+  { value: '2.5', label: 'Medium / Low' },
+  { value: '3', label: 'Low / High' },
+  { value: '2.5', label: 'Low / Medium' },
+  { value: '2', label: 'Low / Low' },
 ];
 
 const sectionVariants = {
@@ -102,7 +104,7 @@ export default function PlayerDataEntryForm({ onSuccess, onCancel, playerId }: P
     marking: '',
     standing_tackle: '',
     sliding_tackle: '',
-    work_rate_encoded: '3.0'
+    work_rate_encoded: '3'
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -184,21 +186,27 @@ export default function PlayerDataEntryForm({ onSuccess, onCancel, playerId }: P
     setIsSubmitting(true);
     setFormMessage(null);
     try {
-      const numericData = Object.fromEntries(
+      // Prepare data for model prediction (work_rate_encoded as float, others as integers)
+      const modelData = Object.fromEntries(
         Object.entries(formData).map(([key, value]) => {
-          // Handle work_rate_encoded as float, others as integers
           if (key === 'work_rate_encoded') {
             return [key, parseFloat(value)];
           }
           return [key, parseInt(value, 10)];
         })
       );
+
+      // Prepare data for database insertion (all as integers)
+      const dbData = Object.fromEntries(
+        Object.entries(formData).map(([key, value]) => [key, parseInt(value, 10)])
+      );
+
       const predictionResponse = await fetch(`${baseUrl}/predict_rating/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           player_id: Number(playerId),
-          features: { ...numericData }
+          features: { ...modelData }
         })
       });
       if (!predictionResponse.ok) {
@@ -207,11 +215,12 @@ export default function PlayerDataEntryForm({ onSuccess, onCancel, playerId }: P
       }
       const predictionResult = await predictionResponse.json();
       const predictedRating = predictionResult.predicted_rating || 0;
+      
       const updateResponse = await fetch(`${baseUrl}/player_profile/update_profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...numericData,
+          ...dbData,
           player_id: Number(playerId),
           overall_performance: predictedRating
         })
