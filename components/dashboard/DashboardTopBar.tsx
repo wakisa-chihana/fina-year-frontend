@@ -289,6 +289,13 @@ const DashboardTopBar = memo(function DashboardTopBar() {
   const router = useRouter();
 
   const handleSignOut = useCallback(() => {
+    const user_id = Cookie.get("x-user-id");
+    
+    // Clear cached user data
+    if (user_id) {
+      localStorage.removeItem(`userData_${user_id}`);
+    }
+    
     Cookie.remove('sport_analytics');
     Cookie.remove('x-user-id');
     router.push('/');
@@ -303,18 +310,42 @@ const DashboardTopBar = memo(function DashboardTopBar() {
 
   useEffect(() => {
     const user_id = Cookie.get("x-user-id");
-    if (user_id && !userData) {
-      setLoading(true);
-      fetch(`${baseUrl}/users/${user_id}`)
-        .then((res) => {
-          if (!res.ok) throw new Error('Failed to fetch user data');
-          return res.json();
-        })
-        .then((data) => setUserData(data))
-        .catch(() => {
-          setUserData({ name: "Guest User", role: "Guest" });
-        })
-        .finally(() => setLoading(false));
+    
+    if (user_id) {
+      // Check if we have cached user data
+      const cachedUserData = localStorage.getItem(`userData_${user_id}`);
+      
+      if (cachedUserData && !userData) {
+        // Use cached data immediately to prevent loading state
+        try {
+          const parsedData = JSON.parse(cachedUserData);
+          setUserData(parsedData);
+          setLoading(false);
+        } catch (error) {
+          console.error('Error parsing cached user data:', error);
+        }
+      }
+      
+      // Only fetch if we don't have userData (including cached data)
+      if (!userData && !cachedUserData) {
+        setLoading(true);
+        fetch(`${baseUrl}/users/${user_id}`)
+          .then((res) => {
+            if (!res.ok) throw new Error('Failed to fetch user data');
+            return res.json();
+          })
+          .then((data) => {
+            setUserData(data);
+            // Cache the user data
+            localStorage.setItem(`userData_${user_id}`, JSON.stringify(data));
+          })
+          .catch(() => {
+            const guestData = { name: "Guest User", role: "Guest" };
+            setUserData(guestData);
+            localStorage.setItem(`userData_${user_id}`, JSON.stringify(guestData));
+          })
+          .finally(() => setLoading(false));
+      }
     } else {
       setLoading(false);
     }

@@ -107,7 +107,13 @@ const SignUp = () => {
   };
 
   const handleSocialLogin = (provider: string) => {
-    window.location.href = `${baseUrl}/auth/${provider}`;
+    // Show brief message that third-party authentication is not yet implemented
+    setErrorMessage(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login is not yet implemented. Please use email/password.`);
+    
+    // Clear the message after 3 seconds
+    setTimeout(() => {
+      setErrorMessage("");
+    }, 3000);
   };
 
   const panelContents = [
