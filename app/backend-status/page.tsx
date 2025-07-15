@@ -210,6 +210,16 @@ const BackendStatusChecker = () => {
             </div>
           </div>
         </motion.div>
+        
+        {/* Footer */}
+        <footer className="mt-8 py-4 text-center border-t border-gray-200">
+          <div className="text-sm text-gray-600">
+            <p>© 2025 Sports Analytics. All rights reserved.</p>
+            <p className="mt-1 text-xs text-gray-500">
+              Empowering teams with data-driven insights
+            </p>
+          </div>
+        </footer>
       </div>
     </div>
   );

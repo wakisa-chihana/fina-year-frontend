@@ -58,11 +58,11 @@ const Page = () => {
     const isFirstLoad = !sessionStorage.getItem('dashboardInitialized');
     
     if (isFirstLoad) {
-      // Initial 2-second delay for page and tab bar to load on first visit
+      // Initial 3-second delay for page and tab bar to load on first visit
       const initialTimer = setTimeout(() => {
         setInitialLoading(false);
         sessionStorage.setItem('dashboardInitialized', 'true');
-      }, 2000);
+      }, 3000);
       
       return () => clearTimeout(initialTimer);
     } else {
