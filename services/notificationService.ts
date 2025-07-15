@@ -29,7 +29,19 @@ class NotificationService {
       const url = `${baseUrl}/notifications/${userId}`;
       console.log('Fetching notifications from:', url);
       
-      const response = await fetch(url);
+      // Add timeout controller
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -37,11 +49,24 @@ class NotificationService {
         throw new Error(`Failed to fetch notifications: ${response.status} - ${errorText}`);
       }
       
-      return await response.json();
+      const data = await response.json();
+      console.log('Notifications fetched successfully:', data);
+      return data;
     } catch (error) {
       console.error('Error fetching notifications:', error);
       console.error('Base URL:', this.baseUrl);
       console.error('User ID:', userId);
+      
+      // More specific error handling
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error('Request timed out. Please check your internet connection.');
+        }
+        if (error.message.includes('Failed to fetch')) {
+          throw new Error('Cannot connect to the server. Please check if the backend is running.');
+        }
+      }
+      
       throw error;
     }
   }

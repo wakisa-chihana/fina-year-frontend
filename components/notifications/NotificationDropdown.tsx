@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaBell, FaTimes, FaCheck, FaTrash, FaExclamationCircle } from 'react-icons/fa';
 import { baseUrl } from '@/constants/baseUrl';
@@ -38,32 +38,49 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ userId: pro
     }
   }, [propUserId]);
 
-  // Fetch notifications
-  const fetchNotifications = async () => {
+  // Test connection and fetch notifications
+  const testAndFetchNotifications = useCallback(async () => {
     if (!userId) return;
     
     setLoading(true);
     setError(null);
+    
     try {
+      // First test if backend is reachable
+      console.log('Testing backend connection...');
+      const connectionTest = await notificationService.testConnection();
+      
+      if (!connectionTest.success) {
+        throw new Error(`Backend connection failed: ${connectionTest.message}`);
+      }
+      
+      console.log('Backend connection successful, fetching notifications...');
       const data = await notificationService.getUserNotifications(userId);
       setNotifications(data);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.log('Notifications loaded successfully:', data);
       
-      // Check if it's a network error
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        const errorMsg = 'Cannot connect to notification service. Please check if the backend is running on http://127.0.0.1:8000';
-        setError(errorMsg);
-        toast.error(errorMsg);
-      } else {
-        const errorMsg = 'Failed to load notifications. Please try again later.';
-        setError(errorMsg);
-        toast.error(errorMsg);
+    } catch (error) {
+      console.error('Error in notification flow:', error);
+      
+      let errorMsg = 'Failed to load notifications.';
+      if (error instanceof Error) {
+        if (error.message.includes('Backend connection failed')) {
+          errorMsg = `Cannot connect to backend: ${error.message}`;
+        } else if (error.message.includes('timed out')) {
+          errorMsg = 'Request timed out. Please check your internet connection.';
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMsg = `Cannot reach server at ${baseUrl}. Please check if the backend is running.`;
+        } else {
+          errorMsg = `Error: ${error.message}`;
+        }
       }
+      
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   // Mark notification as read
   const markAsRead = async (notificationId: number) => {
@@ -112,15 +129,15 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ userId: pro
   // Fetch notifications when component mounts or user changes
   useEffect(() => {
     if (userId) {
-      fetchNotifications();
+      testAndFetchNotifications();
     }
-  }, [userId, fetchNotifications]); // Add fetchNotifications dependency
+  }, [userId, testAndFetchNotifications]);
 
   // Toggle dropdown and fetch notifications
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
     if (!isOpen && userId) {
-      fetchNotifications();
+      testAndFetchNotifications();
     }
   };
 
@@ -256,7 +273,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ userId: pro
                   <p className="text-sm font-medium mb-2">Connection Error</p>
                   <p className="text-xs text-gray-600 mb-4">{error}</p>
                   <button
-                    onClick={() => fetchNotifications()}
+                    onClick={() => testAndFetchNotifications()}
                     className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
                   >
                     Try Again
