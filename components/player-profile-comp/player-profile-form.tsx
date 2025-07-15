@@ -124,7 +124,11 @@ export default function PlayerDataEntryForm({ onSuccess, onCancel, playerId }: P
     if (requiredFields.includes(name) && value === '') {
       return 'This field is required';
     }
-    if (value === '' || name === 'work_rate_encoded') return '';
+    if (value === '') return '';
+    
+    // Skip validation for work_rate_encoded as it's a select field with predefined values
+    if (name === 'work_rate_encoded') return '';
+    
     const numValue = Number(value);
     if (isNaN(numValue)) return 'Must be a number';
     if (['weak_foot', 'skill_moves'].includes(name)) {
@@ -181,7 +185,13 @@ export default function PlayerDataEntryForm({ onSuccess, onCancel, playerId }: P
     setFormMessage(null);
     try {
       const numericData = Object.fromEntries(
-        Object.entries(formData).map(([key, value]) => [key, Number(value)])
+        Object.entries(formData).map(([key, value]) => {
+          // Handle work_rate_encoded as float, others as integers
+          if (key === 'work_rate_encoded') {
+            return [key, parseFloat(value)];
+          }
+          return [key, parseInt(value, 10)];
+        })
       );
       const predictionResponse = await fetch(`${baseUrl}/predict_rating/`, {
         method: 'POST',
