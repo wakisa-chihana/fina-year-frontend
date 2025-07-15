@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FaCheck, FaTimes, FaSpinner, FaServer, FaExclamationTriangle } from 'react-icons/fa';
 import { baseUrl } from '@/constants/baseUrl';
@@ -99,11 +99,11 @@ const BackendStatusChecker = () => {
     }
   };
 
-  const runAllTests = async () => {
+  const runAllTests = useCallback(async () => {
     await testBackendConnection();
     await testNotificationEndpoints();
     await testFastAPIDoc();
-  };
+  }, []);
 
   useEffect(() => {
     runAllTests();
