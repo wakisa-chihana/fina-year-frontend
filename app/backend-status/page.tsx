@@ -25,7 +25,7 @@ const BackendStatusChecker = () => {
     setTests(prev => prev.map((test, i) => i === index ? { ...test, ...update } : test));
   };
 
-  const testBackendConnection = async () => {
+  const testBackendConnection = useCallback(async () => {
     updateTest(0, { loading: true, message: 'Testing...' });
     
     try {
@@ -46,9 +46,9 @@ const BackendStatusChecker = () => {
       });
       return false;
     }
-  };
+  }, []);
 
-  const testNotificationEndpoints = async () => {
+  const testNotificationEndpoints = useCallback(async () => {
     updateTest(1, { loading: true, message: 'Testing...' });
     
     try {
@@ -69,9 +69,9 @@ const BackendStatusChecker = () => {
       });
       return false;
     }
-  };
+  }, []);
 
-  const testFastAPIDoc = async () => {
+  const testFastAPIDoc = useCallback(async () => {
     updateTest(2, { loading: true, message: 'Testing...' });
     
     try {
@@ -97,13 +97,13 @@ const BackendStatusChecker = () => {
       });
       return false;
     }
-  };
+  }, []);
 
   const runAllTests = useCallback(async () => {
     await testBackendConnection();
     await testNotificationEndpoints();
     await testFastAPIDoc();
-  }, []);
+  }, [testBackendConnection, testNotificationEndpoints, testFastAPIDoc]);
 
   useEffect(() => {
     runAllTests();
