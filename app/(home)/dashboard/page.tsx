@@ -24,6 +24,10 @@ const Page = () => {
 
   const fetchTeam = useCallback(async () => {
     if (!coachId) {
+      // Refresh the page after a short delay if user cookie is not available
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
       setIsLoading(false);
       setHasLoaded(true);
       return;
