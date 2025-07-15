@@ -19,6 +19,7 @@ const Page = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [hasLoaded, setHasLoaded] = useState<boolean>(false);
+  const [initialLoading, setInitialLoading] = useState<boolean>(true);
 
   const coachId = Cookies.get("x-user-id") ? parseInt(Cookies.get("x-user-id")!) : null;
 
@@ -53,10 +54,21 @@ const Page = () => {
   }, [coachId]);
 
   useEffect(() => {
-    fetchTeam();
-  }, [fetchTeam]);
+    // Initial 2-second delay for page and tab bar to load
+    const initialTimer = setTimeout(() => {
+      setInitialLoading(false);
+    }, 2000);
 
-  if (!hasLoaded) {
+    return () => clearTimeout(initialTimer);
+  }, []);
+
+  useEffect(() => {
+    if (!initialLoading) {
+      fetchTeam();
+    }
+  }, [fetchTeam, initialLoading]);
+
+  if (initialLoading || !hasLoaded) {
     return <LoadingAnimation />;
   }
 
