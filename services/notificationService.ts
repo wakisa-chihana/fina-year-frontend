@@ -26,7 +26,7 @@ class NotificationService {
    */
   async getUserNotifications(userId: number): Promise<Notification[]> {
     try {
-      const url = `${this.baseUrl}/notifications/${userId}`;
+      const url = `${baseUrl}/notifications/${userId}`;
       console.log('Fetching notifications from:', url);
       
       const response = await fetch(url);
@@ -51,7 +51,7 @@ class NotificationService {
    */
   async sendNotification(notification: NotificationCreate): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await fetch(`${this.baseUrl}/notifications/send`, {
+      const response = await fetch(`${baseUrl}/notifications/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ class NotificationService {
    */
   async deleteNotification(notificationId: number): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await fetch(`${this.baseUrl}/notifications/${notificationId}`, {
+      const response = await fetch(`${baseUrl}/notifications/${notificationId}`, {
         method: 'DELETE',
       });
       
@@ -115,7 +115,7 @@ class NotificationService {
    */
   async notifyMissingPerformance(): Promise<{ message: string }> {
     try {
-      const response = await fetch(`${this.baseUrl}/notifications/notify_missing_performance`, {
+      const response = await fetch(`${baseUrl}/notifications/notify_missing_performance`, {
         method: 'POST',
       });
       
@@ -204,7 +204,7 @@ class NotificationService {
     
     try {
       // Test basic connection
-      const response = await fetch(`${this.baseUrl}/docs`, {
+      const response = await fetch(`${baseUrl}/docs`, {
         method: 'GET',
         headers: {
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -250,7 +250,7 @@ class NotificationService {
   async testNotificationEndpoints(): Promise<{ success: boolean; message: string; details?: any }> {
     try {
       // Test with a non-existent user ID to see if endpoint exists
-      const response = await fetch(`${this.baseUrl}/notifications/999999`);
+      const response = await fetch(`${baseUrl}/notifications/999999`);
       
       if (response.status === 404) {
         // This means the endpoint exists but user not found - which is expected
