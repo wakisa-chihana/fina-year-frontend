@@ -1,27 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { baseUrl } from './constants/baseUrl';
 
-const protectedRoutes = [
-  '/dashboard',
-  '/dashboard/my-profile',
-  '/dashboard/player-profile',
-  '/dashboard/player-profile/[id]',
-  '/dashboard/team-formation',
-  '/my-profile',
-  '/player-profile',
-  '/player-profile/[id]',
-  '/team-formation'
-];
+const protectedRoutes = ['/dashboard', '/player-profile', '/player-profile/[id]'];
 const authRoutes = ['/sign-in', '/sign-up', '/reset-password', '/password-reset-request'];
 const publicRoutes = ['/contact', '/help', '/settings', '/'];
 
+// In-memory cache for token validation
 const tokenCache = new Map<string, { data: any; expires: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const API_TIMEOUT = 5000; // 5 seconds
 
-async function verifyUserToken(token: string) {
+async function verifyUserToken(token: string): Promise<any | null> {
   if (!token || typeof token !== 'string' || token.length < 10) {
-    console.warn('Token skipped: Invalid format');
+    console.warn('Invalid token format');
     return null;
   }
 
@@ -36,13 +27,8 @@ async function verifyUserToken(token: string) {
   try {
     const response = await fetch(`${baseUrl}/users/me`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        access_token: token,
-        token_type: 'bearer',
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ access_token: token, token_type: 'bearer' }),
       signal: controller.signal,
     });
 
@@ -54,18 +40,15 @@ async function verifyUserToken(token: string) {
     }
 
     const data = await response.json();
-    tokenCache.set(token, {
-      data,
-      expires: Date.now() + CACHE_TTL,
-    });
-
+    tokenCache.set(token, { data, expires: Date.now() + CACHE_TTL });
     return data;
+
   } catch (error: any) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      console.error('Token verification timeout');
+      console.warn('Token verification timed out');
     } else {
-      console.error('Token verification error:', error.message || error);
+      console.warn('Token verification failed:', error.message);
     }
     return null;
   }
@@ -77,14 +60,13 @@ export async function middleware(req: NextRequest) {
     const token = req.cookies.get('sport_analytics')?.value;
     const userId = req.cookies.get('x-user-id')?.value;
 
-    // Allow public routes
     if (publicRoutes.some(route => pathname.startsWith(route))) {
       return NextResponse.next();
     }
 
-    const userData = await verifyUserToken(token || '');
+    const userData = token ? await verifyUserToken(token) : null;
 
-    // Handle auth routes (redirect to dashboard if already authenticated)
+    // Handle auth routes — redirect to dashboard if already logged in
     if (authRoutes.some(route => pathname.startsWith(route))) {
       if (userData) {
         const response = NextResponse.redirect(new URL('/dashboard', req.url));
@@ -100,7 +82,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
-    // Handle protected routes
+    // Handle protected routes — redirect to sign-in if not authenticated
     if (protectedRoutes.some(route => pathname.startsWith(route))) {
       if (!userData) {
         const response = NextResponse.redirect(new URL('/sign-in', req.url));
@@ -109,7 +91,7 @@ export async function middleware(req: NextRequest) {
         return response;
       }
 
-      // Ensure user ID matches token's user
+      // Ensure cookie user ID matches token user ID
       if (userId !== userData.id) {
         const response = NextResponse.redirect(new URL(pathname, req.url));
         response.cookies.set('x-user-id', userData.id, {
@@ -125,10 +107,15 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
-    // Fallback to next for unmatched routes
+    // Default behavior for non-matched routes
     return NextResponse.next();
-  } catch (error) {
-    console.error('Middleware critical failure:', error);
+
+  } catch (error: any) {
+    console.error('Middleware error:', {
+      message: error.message || 'Unknown error',
+      stack: error.stack,
+    });
+
     const response = NextResponse.redirect(new URL('/error', req.url));
     response.cookies.delete('sport_analytics');
     response.cookies.delete('x-user-id');
