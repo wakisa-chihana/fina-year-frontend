@@ -727,8 +727,9 @@ export default function PlayerProfilePage() {
         animate={{ opacity: 1, y: 0 }}
         className={`bg-gradient-to-r from-blue-500 to-indigo-600 ${isMobile ? "p-4" : "p-8"} text-white shadow-lg rounded-b-3xl border-b-8 top-0 z-30`}
       >
-        <div className={`mx-auto flex ${isMobile ? "flex-col gap-4" : "items-center justify-between max-w-7xl"}`}>
-          <div className="flex items-center gap-4">
+        <div className={`mx-auto ${isMobile ? "space-y-4" : "flex items-center justify-between max-w-7xl"}`}>
+          {/* Title Section */}
+          <div className={`flex items-center ${isMobile ? "justify-center" : "gap-4"}`}>
             <button
               className="bg-white/20 hover:bg-white/40 rounded-full p-2 transition"
               onClick={() => window.history.back()}
@@ -736,20 +737,27 @@ export default function PlayerProfilePage() {
             >
               <FaChevronLeft size={20} />
             </button>
-            <GiSoccerBall className={sizes.headerIcon} />
-            <h1 className={`${sizes.title} font-extrabold tracking-widest drop-shadow-lg`}>Player Profile</h1>
+            <div className={`flex items-center gap-2 ${isMobile ? "ml-2" : "ml-0"}`}>
+              <GiSoccerBall className={sizes.headerIcon} />
+              <h1 className={`${sizes.title} font-extrabold tracking-wide drop-shadow-lg`}>
+                {isMobile ? "Profile" : "Player Profile"}
+              </h1>
+            </div>
           </div>
-          <div className={`flex items-center ${isMobile ? "flex-wrap gap-2 mt-2" : "space-x-4"}`}>
-            <div className="bg-white/20 rounded-full px-5 py-2 text-base font-bold tracking-wide">
-              ID: {playerData.player_id}
+          
+          {/* Controls Section */}
+          <div className={`flex items-center justify-between ${isMobile ? "gap-3" : "space-x-4"}`}>
+            <div className={`bg-white/20 rounded-xl ${isMobile ? "px-3 py-2" : "px-5 py-2"} ${isMobile ? "text-sm" : "text-base"} font-bold tracking-wide flex items-center gap-2`}>
+              <span className="text-white/80">ID:</span>
+              <span className="text-white">{playerData.player_id}</span>
             </div>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 bg-white text-[#0c2830] hover:bg-slate-50 px-4 py-2 rounded-xl font-bold shadow-md transition"
+              className={`flex items-center gap-2 bg-white text-[#0c2830] hover:bg-slate-50 ${isMobile ? "px-3 py-2 text-sm" : "px-4 py-2"} rounded-xl font-bold shadow-md transition`}
             >
-              <FaPlus className="mr-1" />
+              <FaPlus className={isMobile ? "text-xs" : "mr-1"} />
               <span>{isMobile ? "Add Data" : "Enter New Data"}</span>
             </motion.button>
           </div>

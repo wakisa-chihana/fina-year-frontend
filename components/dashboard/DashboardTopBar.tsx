@@ -518,7 +518,7 @@ const DashboardTopBar = memo(function DashboardTopBar() {
                   </p>
                 </motion.div>
               </motion.div>
-              <ul className="py-2 overflow-y-auto h-[calc(100%-3rem)]">
+              <ul className="py-3 overflow-y-auto h-[calc(100%-3rem)] space-y-1">
                 {navTabs.map((tab, idx) => (
                   <motion.li
                     key={tab.route}
@@ -528,7 +528,7 @@ const DashboardTopBar = memo(function DashboardTopBar() {
                   >
                     <Link
                       href={tab.route}
-                      className={`flex items-center gap-2 px-3 py-2 ${
+                      className={`flex items-center gap-4 px-4 py-3 mx-2 rounded-lg ${
                         isActiveRoute(tab.route)
                           ? "bg-[#e8f5fd] text-[#1d9bf0]"
                           : "text-[#0f1419] hover:bg-[#f7f9f9]"
@@ -549,7 +549,7 @@ const DashboardTopBar = memo(function DashboardTopBar() {
                 >
                   <button
                     onClick={handleSignOut}
-                    className="flex items-center gap-2 px-3 py-2 w-full text-left text-sm text-[#0f1419] hover:bg-[#f7f9f9] border-t border-[#e7e7e8] mt-2"
+                    className="flex items-center gap-4 px-4 py-3 mx-2 rounded-lg w-full text-left text-sm text-[#0f1419] hover:bg-[#f7f9f9] border-t border-[#e7e7e8] mt-4"
                   >
                     <FiLogOut size={16} className="text-[#536471]" />
                     <span>Sign out</span>
